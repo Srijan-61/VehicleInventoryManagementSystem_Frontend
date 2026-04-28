@@ -1,19 +1,7 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "./assets/vite.svg";
-import heroImg from "./assets/hero.png";
-import "./App.css";
-import { h1 } from "framer-motion/client";
+import CustomerDetails from "./pages/Staff/CustomerDetails";
 
 function App() {
-  const [count, setCount] = useState(0);
-
-  return (
-    <h1 className="text-3xl font-bold underline">
-      {" "}
-      Vehicle Management System{" "}
-    </h1>
-  );
+  return <CustomerDetails />;
 }
 
 export default App;
