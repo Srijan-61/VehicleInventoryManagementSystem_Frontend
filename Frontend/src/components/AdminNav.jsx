@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, UserPlus, LogOut } from 'lucide-react';
+import { LayoutDashboard, UserPlus, LogOut, Package, FileText, Users } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 const AdminNav = () => {
@@ -20,7 +20,7 @@ const AdminNav = () => {
       <div className="p-6 border-b border-gray-100">
         <h2 className="text-xl font-bold text-gray-800 tracking-tight">Admin Panel</h2>
       </div>
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         <Link 
           to="/admin" 
           className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${isActive('/admin') ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
@@ -34,6 +34,20 @@ const AdminNav = () => {
         >
           <UserPlus className="h-5 w-5" />
           Staff Registration
+        </Link>
+        <Link 
+          to="/admin/parts" 
+          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${isActive('/admin/parts') ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
+        >
+          <Package className="h-5 w-5" />
+          Parts Management
+        </Link>
+        <Link 
+          to="/admin/sales-invoice" 
+          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${isActive('/admin/sales-invoice') ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
+        >
+          <FileText className="h-5 w-5" />
+          Sales Invoice
         </Link>
       </nav>
       <div className="p-4 border-t border-gray-100">
