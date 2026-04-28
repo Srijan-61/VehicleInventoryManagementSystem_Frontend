@@ -25,9 +25,27 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem('token', data.Token || data.token);
-        toast.success('Login successful!');
-        navigate('/admin');
+        const token = data.Token || data.token;
+        localStorage.setItem('token', token);
+        
+        try {
+          // Decode the JWT payload to get the user's role
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          // ASP.NET Core often stores the role in this schema URI or just 'role'
+          const role = payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || payload.role;
+          
+          toast.success('Login successful!');
+          
+          // Navigate based on role
+          if (role === 'Staff') {
+            navigate('/staff');
+          } else {
+            navigate('/admin'); // Default or Admin
+          }
+        } catch (e) {
+          toast.success('Login successful!');
+          navigate('/admin');
+        }
       } else {
         toast.error(data.Message || data.message || 'Login failed. Please check your credentials.');
       }

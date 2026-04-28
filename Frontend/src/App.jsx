@@ -7,6 +7,12 @@ import AdminDashboard from './Pages/AdminDashboard';
 import AdminHome from './Pages/AdminHome';
 import StaffRegistration from './Pages/StaffRegistration';
 
+// Staff Components
+import StaffDashboard from './Pages/StaffDashboard';
+import StaffHome from './Pages/StaffHome';
+import CustomerRegistration from './components/CustomerRegistration';
+import CreateSalesInvoice from './components/CreateSalesInvoice';
+
 function App() {
   return (
     <BrowserRouter>
@@ -16,6 +22,11 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />}>
           <Route index element={<AdminHome />} />
           <Route path="register-staff" element={<StaffRegistration />} />
+        </Route>
+        <Route path="/staff" element={<StaffDashboard />}>
+          <Route index element={<StaffHome />} />
+          <Route path="register-customer" element={<CustomerRegistration />} />
+          <Route path="create-invoice" element={<CreateSalesInvoice />} />
         </Route>
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
