@@ -1,3 +1,9 @@
+ sarwogya
+import CustomerDetails from "./pages/Staff/CustomerDetails";
+
+function App() {
+  return <CustomerDetails />;
+
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -21,6 +27,7 @@ function App() {
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
     </BrowserRouter>
   );
+ main
 }
 
 export default App;
