@@ -4,11 +4,11 @@ import { UserPlus } from 'lucide-react';
 
 const StaffRegistration = () => {
   const [formData, setFormData] = useState({
-    FullName: '',
-    Email: '',
-    PhoneNumber: '',
-    Password: '',
-    Address: ''
+    fullName: '',
+    email: '',
+    phoneNumber: '',
+    password: '',
+    address: ''
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -33,7 +33,7 @@ const StaffRegistration = () => {
 
       if (response.ok) {
         toast.success('Staff registered successfully.');
-        setFormData({ FullName: '', Email: '', PhoneNumber: '', Password: '', Address: '' });
+        setFormData({ fullName: '', email: '', phoneNumber: '', password: '', address: '' });
       } else {
         const data = await response.json();
         toast.error(data.Message || data.message || 'Failed to register staff.');
@@ -58,29 +58,29 @@ const StaffRegistration = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="FullName">Full Name</label>
-              <input id="FullName" className={inputClass} value={formData.FullName} onChange={handleChange} required />
+              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="fullName">Full Name</label>
+              <input id="fullName" className={inputClass} value={formData.fullName} onChange={handleChange} placeholder="Full Name" required />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="Email">Email</label>
-              <input id="Email" type="email" className={inputClass} value={formData.Email} onChange={handleChange} required />
+              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="email">Email</label>
+              <input id="email" type="email" className={inputClass} value={formData.email} onChange={handleChange} placeholder="Email" required />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="PhoneNumber">Phone Number</label>
-              <input id="PhoneNumber" className={inputClass} value={formData.PhoneNumber} onChange={handleChange} required />
+              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="phoneNumber">Phone Number</label>
+              <input id="phoneNumber" className={inputClass} value={formData.phoneNumber} onChange={handleChange} placeholder="Phone Number" required />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="Password">Password</label>
-              <input id="Password" type="password" className={inputClass} value={formData.Password} onChange={handleChange} required />
+              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="password">Password</label>
+              <input id="password" type="password" className={inputClass} value={formData.password} onChange={handleChange} placeholder="Password" required />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="Address">Address</label>
-            <input id="Address" className={inputClass} value={formData.Address} onChange={handleChange} required />
+            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="address">Address</label>
+            <input id="address" className={inputClass} value={formData.address} onChange={handleChange} placeholder="Address" required />
           </div>
 
           <button 

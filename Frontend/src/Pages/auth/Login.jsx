@@ -112,7 +112,7 @@ const Login = () => {
               <button 
                 type="submit" 
                 disabled={isLoading}
-                className="w-full flex justify-center items-center gap-2 py-4 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full flex justify-center items-center gap-2 py-4 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <span className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white"></span>
@@ -127,7 +127,7 @@ const Login = () => {
           <div className="mt-8 text-center sm:text-left">
             <p className="text-sm font-medium text-slate-500">
               Don't have an account yet?{' '}
-              <Link to="/register" className="text-blue-600 hover:text-blue-700 font-bold transition-colors">
+              <Link to="/register" className="text-blue-600 hover:text-blue-700 font-bold">
                 Sign-up
               </Link>
             </p>
