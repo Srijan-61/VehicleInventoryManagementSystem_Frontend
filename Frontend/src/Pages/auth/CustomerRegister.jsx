@@ -74,7 +74,7 @@ const CustomerRegister = () => {
                     value={formData.fullName}
                     onChange={handleChange}
                     required
-                    placeholder="John Doe"
+                    placeholder="Full Name"
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 font-medium"
                   />
                 </div>
@@ -92,7 +92,7 @@ const CustomerRegister = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    placeholder="john@example.com"
+                    placeholder="Email Address"
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 font-medium"
                   />
                 </div>
@@ -110,7 +110,7 @@ const CustomerRegister = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     required
-                    placeholder="+1 (555) 000-0000"
+                    placeholder="Phone Number"
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 font-medium"
                   />
                 </div>
@@ -128,7 +128,7 @@ const CustomerRegister = () => {
                     value={formData.address}
                     onChange={handleChange}
                     required
-                    placeholder="123 Main St, City, Country"
+                    placeholder="Address"
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 font-medium"
                   />
                 </div>
@@ -146,7 +146,7 @@ const CustomerRegister = () => {
                     value={formData.password}
                     onChange={handleChange}
                     required
-                    placeholder="••••••••"
+                    placeholder="Password"
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 font-medium"
                   />
                 </div>
@@ -157,7 +157,7 @@ const CustomerRegister = () => {
               <button 
                 type="submit" 
                 disabled={isLoading}
-                className="w-full flex justify-center items-center gap-2 py-4 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full flex justify-center items-center gap-2 py-4 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <span className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white"></span>
@@ -172,7 +172,7 @@ const CustomerRegister = () => {
           <div className="mt-8 text-center sm:text-left">
             <p className="text-sm font-medium text-slate-500">
               Already have an account?{' '}
-              <Link to="/login" className="text-blue-600 hover:text-blue-700 font-bold transition-colors">
+              <Link to="/login" className="text-blue-600 hover:text-blue-700 font-bold">
                 Log in
               </Link>
             </p>

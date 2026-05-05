@@ -9,7 +9,7 @@ const StaffLayout = () => {
         <nav className="flex-1 p-4 space-y-2">
           <Link to="/staff" className="block px-4 py-2 rounded hover:bg-blue-800">[Dashboard]</Link>
           <Link to="/staff/register-customer" className="block px-4 py-2 rounded hover:bg-blue-800">[Register Customer]</Link>
-          <Link to="/staff/pos" className="block px-4 py-2 rounded hover:bg-blue-800">[POS Invoice]</Link>
+          <Link to="/staff/sales-invoice" className="block px-4 py-2 rounded hover:bg-blue-800">[Sales Invoice]</Link>
           <Link to="/staff/search" className="block px-4 py-2 rounded hover:bg-blue-800">[Customer Search]</Link>
           <Link to="/staff/reports" className="block px-4 py-2 rounded hover:bg-blue-800">[Customer Reports]</Link>
         </nav>

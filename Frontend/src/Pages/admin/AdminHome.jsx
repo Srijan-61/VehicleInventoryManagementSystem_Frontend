@@ -8,27 +8,27 @@ const AdminHome = () => {
       <div className="grid gap-6 md:grid-cols-3">
         <StatsCard 
           title="Total Staff"
-          value="24"
+          value="0"
           icon={Users}
-          description="↑ +2 from last month"
+          description="-"
           iconColorClass="bg-blue-50 text-blue-600"
           descColorClass="text-green-600"
         />
         
         <StatsCard 
           title="Low Stock Alerts"
-          value="7"
+          value="0"
           icon={AlertTriangle}
-          description="Needs attention"
+          description="-"
           iconColorClass="bg-amber-50 text-amber-500"
           descColorClass="text-amber-600"
         />
         
         <StatsCard 
           title="Pending Invoices"
-          value="12"
+          value="0"
           icon={FileText}
-          description="3 due today"
+          description="-"
           iconColorClass="bg-purple-50 text-purple-600"
           descColorClass="text-gray-500"
         />

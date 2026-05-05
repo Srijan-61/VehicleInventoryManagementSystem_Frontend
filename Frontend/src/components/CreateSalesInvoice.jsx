@@ -56,6 +56,7 @@ const CreateSalesInvoice = () => {
 
       const payload = {
         customer_ID: Number(form.customer_ID.value),
+        staff_ID: Number(form.staff_ID.value),
         is_Paid: form.is_Paid.checked,
         items: validItems
       };
@@ -98,7 +99,7 @@ const CreateSalesInvoice = () => {
         <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-8">
             
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className={labelClass}>Customer</label>
                 <select required name="customer_ID" className={inputClass}>
@@ -109,6 +110,10 @@ const CreateSalesInvoice = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className={labelClass}>Staff ID</label>
+                <input required type="number" name="staff_ID" className={inputClass} placeholder="e.g., 1" />
               </div>
             </div>
 

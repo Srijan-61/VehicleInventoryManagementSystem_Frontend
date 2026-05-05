@@ -26,10 +26,11 @@ import PurchaseInvoices from './pages/admin/PurchaseInvoices';
 import ManageVendors from './pages/admin/ManageVendors';
 
 // Staff Pages
-import RegisterCustomer from './pages/staff/RegisterCustomer';
-import POSInvoice from './pages/staff/POSInvoice';
-import CustomerSearch from './pages/staff/CustomerSearch';
-import CustomerReports from './pages/staff/CustomerReports';
+import RegisterCustomer from './Pages/staff/RegisterCustomer';
+import SalesInvoice from './Pages/staff/SalesInvoice';
+import CustomerSearch from './Pages/staff/CustomerSearch';
+import CustomerReports from './Pages/staff/CustomerReports';
+import SendEmailInvoice from './Pages/staff/SendEmailInvoice';
 
 // Customer Pages
 import Profile from './pages/customer/Profile';
@@ -47,7 +48,7 @@ function App() {
 
   const staffLinks = [
     { to: '/staff/register-customer', label: 'Register Customer', icon: UserPlus },
-    { to: '/staff/pos', label: 'Sales Invoices/POS', icon: Monitor },
+    { to: '/staff/sales-invoice', label: 'Sales Invoice', icon: FileText },
     { to: '/staff/search', label: 'Customer Search & Details', icon: Search },
     { to: '/staff/reports', label: 'Customer Reports', icon: PieChart },
     { to: '/staff/email-invoice', label: 'Send Email Invoice', icon: Mail }
@@ -85,10 +86,10 @@ function App() {
           <Route path="/staff" element={<DashboardLayout title="Staff Portal" links={staffLinks} />}>
             <Route index element={<Navigate to="/staff/register-customer" replace />} />
             <Route path="register-customer" element={<RegisterCustomer />} />
-            <Route path="pos" element={<POSInvoice />} />
+            <Route path="sales-invoice" element={<SalesInvoice />} />
             <Route path="search" element={<CustomerSearch />} />
             <Route path="reports" element={<CustomerReports />} />
-            <Route path="email-invoice" element={<div>Send Email Invoice Page</div>} />
+            <Route path="email-invoice" element={<SendEmailInvoice />} />
           </Route>
 
           {/* Customer Routes */}
