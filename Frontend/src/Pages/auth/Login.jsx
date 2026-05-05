@@ -1,103 +1,179 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Car, Mail, Lock, Eye, EyeOff, ArrowRight, Users } from 'lucide-react';
-import apiClient from '../../api/apiClient';
+import { LogIn, Mail, Lock } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+
     try {
-      // /api/Auth/login → proxied to https://localhost:7111/api/Auth/login
-      const { data } = await apiClient.post('/Auth/login', { email, password });
-      localStorage.setItem('token', data.Token || data.token);
-      toast.success('Login successful!');
-      navigate('/admin');
+      const response = await fetch('https://localhost:7111/api/Auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const token = data.Token || data.token;
+        localStorage.setItem('token', token);
+        
+        try {
+          // Decode the JWT payload to get the user's role
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          // ASP.NET Core often stores the role in this schema URI or just 'role'
+          const role = payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || payload.role;
+          
+          toast.success('Login successful!');
+          
+          // Navigate based on role
+          if (role === 'Staff') {
+            navigate('/staff');
+          } else if (role === 'Customer') {
+            navigate('/customer');
+          } else {
+            navigate('/admin'); // Default or Admin
+          }
+        } catch (e) {
+          toast.success('Login successful!');
+          navigate('/admin');
+        }
+      } else {
+        toast.error(data.Message || data.message || 'Login failed. Please check your credentials.');
+      }
     } catch (err) {
-      const msg = err.response?.data?.Message || err.response?.data?.message || 'Login failed. Please check your credentials.';
-      toast.error(msg);
+      toast.error('An error occurred while connecting to the server.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="relative flex min-h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900">
-      <div className="pointer-events-none absolute -top-32 -left-32 h-[500px] w-[500px] rounded-full bg-blue-600/20 blur-3xl" style={{ animation: 'pulse 6s ease-in-out infinite' }} />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-indigo-500/20 blur-3xl" style={{ animation: 'pulse 8s ease-in-out infinite 2s' }} />
-      <div className="pointer-events-none absolute top-1/2 left-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/10 blur-3xl" style={{ animation: 'pulse 7s ease-in-out infinite 1s' }} />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-
-      <div className="relative z-10 m-auto w-full max-w-md px-4">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl" style={{ animation: 'fadeSlideUp 0.6s ease-out both' }}>
-          <div className="mb-8 flex flex-col items-center gap-3">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/30" style={{ animation: 'fadeSlideUp 0.6s ease-out 0.1s both' }}>
-              <Car className="h-8 w-8 text-white" />
-            </div>
-            <div className="text-center" style={{ animation: 'fadeSlideUp 0.6s ease-out 0.2s both' }}>
-              <h1 className="text-2xl font-bold tracking-tight text-white">Vehicle Inventory</h1>
-              <p className="mt-1 text-sm text-blue-200/70">Sign in to access the management system</p>
-            </div>
+    <div className="flex min-h-screen bg-white font-inter">
+      {/* Left Column - Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center p-8 lg:p-24 xl:p-32 relative z-10">
+        
+        <div className="w-full max-w-md mx-auto">
+          <div className="mb-10">
+            <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">Welcome Back</h2>
+            <p className="text-slate-500 mt-3 text-sm lg:text-base">Please enter your details to access your account.</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5" style={{ animation: 'fadeSlideUp 0.6s ease-out 0.3s both' }}>
-            <div>
-              <label htmlFor="email" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-blue-200/80">Email Address</label>
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-sm font-semibold text-slate-700">Email Address</label>
               <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-300/50" />
-                <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="admin@example.com"
-                  className="w-full rounded-xl border border-white/10 bg-white/10 py-3 pl-10 pr-4 text-sm text-white placeholder-white/25 outline-none transition-all duration-200 focus:border-blue-400/60 focus:bg-white/15 focus:ring-2 focus:ring-blue-500/30" />
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                  <Mail className="w-5 h-5 text-slate-400" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="name@example.com"
+                  className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 font-medium"
+                />
               </div>
             </div>
 
-            <div>
-              <label htmlFor="password" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-blue-200/80">Password</label>
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-semibold text-slate-700">Password</label>
               <div className="relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-300/50" />
-                <input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••"
-                  className="w-full rounded-xl border border-white/10 bg-white/10 py-3 pl-10 pr-11 text-sm text-white placeholder-white/25 outline-none transition-all duration-200 focus:border-blue-400/60 focus:bg-white/15 focus:ring-2 focus:ring-blue-500/30" />
-                <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-blue-300/50 hover:text-blue-200 transition-colors" tabIndex={-1}>
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                  <Lock className="w-5 h-5 text-slate-400" />
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 font-medium"
+                />
               </div>
             </div>
 
-            <button type="submit" disabled={isLoading}
-              className="group relative mt-2 w-full overflow-hidden rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition-all duration-200 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:scale-100">
-              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
-              <span className="relative flex items-center justify-center gap-2">
+
+
+            <div className="pt-4">
+              <button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full flex justify-center items-center gap-2 py-4 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
                 {isLoading ? (
-                  <><svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Authenticating…</>
+                  <span className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white"></span>
                 ) : (
-                  <>Sign In<ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" /></>
+                  <LogIn className="w-5 h-5" />
                 )}
-              </span>
-            </button>
+                {isLoading ? 'Authenticating...' : 'Log In'}
+              </button>
+            </div>
           </form>
 
-          <p className="mt-6 text-center text-xs text-white/25" style={{ animation: 'fadeSlideUp 0.6s ease-out 0.4s both' }}>Vehicle Inventory Management System</p>
-
-          <div className="mt-4" style={{ animation: 'fadeSlideUp 0.6s ease-out 0.5s both' }}>
-            <div className="relative flex items-center gap-3">
-              <div className="flex-1 h-px bg-white/10" /><span className="text-xs text-white/25">or</span><div className="flex-1 h-px bg-white/10" />
-            </div>
-            <Link to="/customer" className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-sm text-blue-200/70 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all duration-200 group">
-              <Users className="h-4 w-4" />Customer Self Service Portal<ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-            </Link>
+          <div className="mt-8 text-center sm:text-left">
+            <p className="text-sm font-medium text-slate-500">
+              Don't have an account yet?{' '}
+              <Link to="/register" className="text-blue-600 hover:text-blue-700 font-bold transition-colors">
+                Sign-up
+              </Link>
+            </p>
           </div>
         </div>
       </div>
 
-      <style>{`@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+      {/* Right Column - Illustration / Design */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-slate-50 items-center justify-center overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 w-full h-full bg-grid-slate-200/[0.04] bg-[size:32px_32px]"></div>
+        <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-b from-blue-50/50 to-indigo-50/50 mix-blend-multiply"></div>
+        <div className="absolute -top-[20%] -right-[10%] w-[70%] h-[70%] rounded-full bg-blue-400/20 blur-[120px]"></div>
+        <div className="absolute -bottom-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-indigo-400/20 blur-[120px]"></div>
+        
+        {/* Abstract illustration representation */}
+        <div className="relative z-10 w-full max-w-lg p-12">
+          <div className="bg-white/60 backdrop-blur-2xl border border-white rounded-3xl shadow-2xl p-8 relative">
+            <div className="absolute -top-12 -left-12 w-24 h-24 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl rotate-12 opacity-80 blur-[2px]"></div>
+            <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-gradient-to-br from-indigo-500 to-purple-400 rounded-full opacity-80 blur-[2px]"></div>
+            
+            <div className="relative z-10">
+
+              <h3 className="text-2xl font-bold text-slate-800 mb-4">Streamline Your Vehicle Inventory</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Experience a seamless management system for your vehicle inventory, parts, and customer relationships all in one powerful platform.
+              </p>
+              
+              <div className="mt-8 space-y-4">
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-500 w-3/4 rounded-full"></div>
+                </div>
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-indigo-400 w-1/2 rounded-full"></div>
+                </div>
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-cyan-400 w-5/6 rounded-full"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
 export default Login;
+

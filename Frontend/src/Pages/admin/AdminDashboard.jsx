@@ -4,16 +4,33 @@ import AdminNav from '../../components/AdminNav';
 
 const AdminDashboard = () => {
   return (
-    <div className="flex w-full min-h-screen bg-gray-50">
+    <div className="bg-background text-on-surface antialiased min-h-screen">
+      {/* TopAppBar */}
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 docked full-width top-0 z-40 fixed w-full">
+        <div className="flex items-center justify-between px-6 h-16 w-full">
+          <div className="flex items-center gap-8">
+            <span className="text-lg font-bold tracking-tighter text-slate-900 dark:text-slate-50 uppercase">Inventory Management</span>
+            <div className="hidden md:flex items-center gap-6">
+              <h1 className="font-h2 text-h2 text-primary">Financial Reports</h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="material-symbols-outlined text-slate-600 cursor-pointer p-2 hover:bg-slate-50 rounded-full" data-icon="notifications">notifications</span>
+            <span className="material-symbols-outlined text-slate-600 cursor-pointer p-2 hover:bg-slate-50 rounded-full" data-icon="settings">settings</span>
+            <span className="material-symbols-outlined text-slate-600 cursor-pointer p-2 hover:bg-slate-50 rounded-full" data-icon="account_circle">account_circle</span>
+          </div>
+        </div>
+      </header>
+
+      {/* SideNavBar */}
       <AdminNav />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-200 h-16 flex items-center px-8 shadow-sm">
-          <h1 className="text-lg font-semibold text-gray-800">Welcome Admin</h1>
-        </header>
-        <main className="flex-1 p-8 overflow-auto bg-gray-50">
+
+      {/* Main Content Area */}
+      <main className="ml-64 pt-16 min-h-screen">
+        <div className="p-8 max-w-7xl mx-auto space-y-8">
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

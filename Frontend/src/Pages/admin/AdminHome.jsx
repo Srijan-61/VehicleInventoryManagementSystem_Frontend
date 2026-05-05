@@ -1,12 +1,12 @@
 import React from 'react';
 import { Users, AlertTriangle, FileText } from 'lucide-react';
-import StatsCard from '../../components/StatsCard';
+import StatsCard from '../components/StatsCard';
 
 const AdminHome = () => {
   return (
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-3">
-        <StatsCard
+        <StatsCard 
           title="Total Staff"
           value="24"
           icon={Users}
@@ -14,7 +14,8 @@ const AdminHome = () => {
           iconColorClass="bg-blue-50 text-blue-600"
           descColorClass="text-green-600"
         />
-        <StatsCard
+        
+        <StatsCard 
           title="Low Stock Alerts"
           value="7"
           icon={AlertTriangle}
@@ -22,7 +23,8 @@ const AdminHome = () => {
           iconColorClass="bg-amber-50 text-amber-500"
           descColorClass="text-amber-600"
         />
-        <StatsCard
+        
+        <StatsCard 
           title="Pending Invoices"
           value="12"
           icon={FileText}
