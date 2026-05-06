@@ -33,9 +33,9 @@ import CustomerReports from './Pages/staff/CustomerReports';
 import SendEmailInvoice from './Pages/staff/SendEmailInvoice';
 
 // Customer Pages
-import Profile from './pages/customer/Profile';
-import SelfService from './pages/customer/SelfService';
-import History from './pages/customer/History';
+import BookAppointment from './pages/customer/BookAppointment';
+import RequestPart from './pages/customer/RequestPart';
+import LeaveReview from './pages/customer/LeaveReview';
 
 function App() {
   const adminLinks = [
@@ -55,9 +55,9 @@ function App() {
   ];
 
   const customerLinks = [
-    { to: '/customer/profile', label: 'Profile Details', icon: User },
-    { to: '/customer/self-service', label: 'Self-Service', icon: Wrench },
-    { to: '/customer/history', label: 'Purchase History', icon: Clock }
+    { to: '/customer/book-appointment', label: 'Book Appointment', icon: Wrench },
+    { to: '/customer/request-part', label: 'Request Part', icon: ShoppingCart },
+    { to: '/customer/leave-review', label: 'Leave Review', icon: Search }
   ];
 
   return (
@@ -94,10 +94,10 @@ function App() {
 
           {/* Customer Routes */}
           <Route path="/customer" element={<DashboardLayout title="Customer Portal" links={customerLinks} />}>
-            <Route index element={<Navigate to="/customer/profile" replace />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="self-service" element={<SelfService />} />
-            <Route path="history" element={<History />} />
+            <Route index element={<Navigate to="/customer/book-appointment" replace />} />
+            <Route path="book-appointment" element={<BookAppointment />} />
+            <Route path="request-part" element={<RequestPart />} />
+            <Route path="leave-review" element={<LeaveReview />} />
           </Route>
 
         </Routes>
