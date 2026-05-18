@@ -5,4 +5,5 @@ export const staffApi = {
   createPOSInvoice: (data) => apiClient.post('/staff/pos-invoice', data),
   searchCustomer: (query) => apiClient.get(`/staff/customers?search=${query}`),
   getCustomerReports: () => apiClient.get('/staff/customer-reports'),
+  getRecentInvoices: (count = 10) => apiClient.get(`/staff/recent-invoices?count=${count}`),
 };

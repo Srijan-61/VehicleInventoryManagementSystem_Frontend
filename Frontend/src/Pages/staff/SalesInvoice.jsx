@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { Plus, Trash2, FileText } from 'lucide-react';
+import { Plus, Minus, Trash2, FileText } from 'lucide-react';
 
 const SalesInvoice = () => {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([{ part_ID: '', quantity: 1 }]);
   const [customers, setCustomers] = useState([]);
+  const [recentInvoices, setRecentInvoices] = useState([]);
+  const [parts, setParts] = useState([]);
 
   useEffect(() => {
     fetchCustomers();
+    fetchRecentInvoices();
+    fetchParts();
   }, []);
 
   const fetchCustomers = async () => {
@@ -27,6 +31,42 @@ const SalesInvoice = () => {
       }
     } catch (error) {
       console.error('Error fetching customers:', error);
+    }
+  };
+
+  const fetchRecentInvoices = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('https://localhost:7111/api/Staff/recent-invoices?count=5', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setRecentInvoices(data);
+      }
+    } catch (error) {
+      console.error('Error fetching recent invoices:', error);
+    }
+  };
+
+  const fetchParts = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('https://localhost:7111/api/Staff/parts', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setParts(data);
+      } else {
+        toast.error('Failed to fetch parts');
+      }
+    } catch (error) {
+      console.error('Error fetching parts:', error);
     }
   };
 
@@ -51,9 +91,23 @@ const SalesInvoice = () => {
     const form = e.target;
     setLoading(true);
 
+    // Client-side stock validation
+    for (const item of items) {
+      if (!item.part_ID) {
+        toast.error('Please select a part for all items.');
+        setLoading(false);
+        return;
+      }
+      const selectedPart = parts.find(p => p.part_ID === parseInt(item.part_ID));
+      if (selectedPart && item.quantity > selectedPart.stock_Quantity) {
+        toast.error(`Not enough stock for ${selectedPart.part_Name}. Available: ${selectedPart.stock_Quantity}`);
+        setLoading(false);
+        return;
+      }
+    }
+
     const payload = {
       customer_ID: parseInt(form.customer_ID.value),
-      staff_ID: parseInt(form.staff_ID.value),
       is_Paid: form.is_Paid.value === 'true',
       items: items.map(item => ({
         part_ID: parseInt(item.part_ID),
@@ -76,10 +130,11 @@ const SalesInvoice = () => {
       );
 
       if (response.ok) {
-        const data = await response.json().catch(() => null);
+        const data = await response.json();
         toast.success(data?.message || 'Sales invoice created successfully!');
         form.reset();
         setItems([{ part_ID: '', quantity: 1 }]);
+        fetchRecentInvoices();
       } else {
         const errorData = await response.json().catch(() => null);
         toast.error(errorData?.message || 'Failed to create invoice.');
@@ -126,17 +181,6 @@ const SalesInvoice = () => {
               </div>
             </div>
             <div>
-              <label className={labelClass}>Staff ID</label>
-              <div className="relative">
-                <input
-                  required
-                  type="number"
-                  name="staff_ID"
-                  className={inputClass}
-                />
-              </div>
-            </div>
-            <div>
               <label className={labelClass}>Payment Status</label>
               <div className="flex gap-6 mt-3">
                 <label className="flex items-center gap-2 cursor-pointer group">
@@ -179,25 +223,48 @@ const SalesInvoice = () => {
               {items.map((item, index) => (
                 <div key={index} className="flex gap-4 items-end bg-gray-50/50 p-4 rounded-xl border border-gray-100 hover:border-gray-200">
                   <div className="flex-1">
-                    <label className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1 block">Part ID</label>
-                    <input
+                    <label className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1 block">Part</label>
+                    <select
                       required
-                      type="number"
                       value={item.part_ID}
                       onChange={(e) => handleItemChange(index, 'part_ID', e.target.value)}
                       className={inputClass}
-                    />
+                    >
+                      <option value="">Select a part</option>
+                      {parts.map(p => (
+                        <option key={p.part_ID} value={p.part_ID}>
+                          {p.part_Name} (Price: ${p.unit_Price}, Stock: {p.stock_Quantity})
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="w-32">
                     <label className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1 block">Quantity</label>
-                    <input
-                      required
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                      className={inputClass}
-                    />
+                    <div className="flex items-center">
+                      <button
+                        type="button"
+                        onClick={() => handleItemChange(index, 'quantity', Math.max(1, (item.quantity || 1) - 1))}
+                        className="p-2 border border-gray-300 bg-gray-50 text-gray-500 rounded-l-lg hover:bg-gray-200 transition-colors"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <input
+                        required
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                        className="w-full text-center px-2 py-2 border-y border-x-0 border-gray-300 text-sm focus:outline-none focus:ring-inset focus:ring-1 focus:ring-blue-500"
+                        style={{ MozAppearance: 'textfield' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleItemChange(index, 'quantity', (item.quantity || 0) + 1)}
+                        className="p-2 border border-gray-300 bg-gray-50 text-gray-500 rounded-r-lg hover:bg-gray-200 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                   <button
                     type="button"
@@ -226,6 +293,49 @@ const SalesInvoice = () => {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Recent Invoices Section */}
+      <div className="border-t border-gray-200 bg-gray-50/30 p-6">
+        <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Invoices</h3>
+        {recentInvoices.length === 0 ? (
+          <p className="text-sm text-gray-500">No recent invoices found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Invoice #</th>
+                  <th className="py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                  <th className="py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
+                  <th className="py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Staff</th>
+                  <th className="py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Total</th>
+                  <th className="py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {recentInvoices.map((inv) => (
+                  <tr key={inv.invoice_No} className="hover:bg-white transition-colors">
+                    <td className="py-3 px-4 text-sm font-medium text-gray-900">#{inv.invoice_No}</td>
+                    <td className="py-3 px-4 text-sm text-gray-500">
+                      {new Date(inv.sales_Date).toLocaleDateString()}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-gray-700">{inv.customer_Name}</td>
+                    <td className="py-3 px-4 text-sm text-gray-500">{inv.staff_Name}</td>
+                    <td className="py-3 px-4 text-sm font-semibold text-gray-900">${inv.final_Total.toFixed(2)}</td>
+                    <td className="py-3 px-4 text-sm">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        inv.is_Paid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {inv.is_Paid ? 'Paid' : 'Pending'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
