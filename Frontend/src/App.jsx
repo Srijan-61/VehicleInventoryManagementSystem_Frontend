@@ -15,8 +15,10 @@ import AuthLayout from './layouts/AuthLayout';
 import DashboardLayout from './layouts/DashboardLayout';
 
 // Pages
-import Login from './pages/auth/Login';
-import CustomerRegister from './pages/auth/CustomerRegister';
+import Login from './Pages/auth/Login';
+import CustomerRegister from './Pages/auth/CustomerRegister';
+import ForgotPassword from './Pages/auth/ForgotPassword';
+import ResetPassword from './Pages/auth/ResetPassword';
 
 // Admin Pages
 import FinancialReports from './pages/admin/FinancialReports';
@@ -70,6 +72,8 @@ function App() {
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<CustomerRegister />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
           </Route>
 
           {/* Admin Routes */}
