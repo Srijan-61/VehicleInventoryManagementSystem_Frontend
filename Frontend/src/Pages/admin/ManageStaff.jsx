@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import { User, Mail, Phone, MapPin, Lock } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Shield } from 'lucide-react';
 
 const ManageStaff = () => {
   const [loading, setLoading] = useState(false);
@@ -15,7 +15,6 @@ const ManageStaff = () => {
       email: form.email.value,
       phoneNumber: form.phoneNumber.value,
       address: form.address.value,
-      password: form.password.value,
     };
 
     try {
@@ -34,7 +33,7 @@ const ManageStaff = () => {
 
       if (response.ok) {
         const data = await response.json().catch(() => null);
-        toast.success(data?.message || 'Staff registered successfully!');
+        toast.success(data?.message || 'Staff registered successfully! Credentials sent via email.');
         form.reset();
       } else {
         const errorData = await response.json().catch(() => null);
@@ -58,7 +57,7 @@ const ManageStaff = () => {
           Register Staff
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          Register a new staff member to the system.
+          Register a new staff member. A secure password will be auto-generated and emailed to them.
         </p>
       </div>
       <div className="p-6">
@@ -117,15 +116,11 @@ const ManageStaff = () => {
                 </div>
               </div>
               <div className="md:col-span-2">
-                <label className={labelClass}>Password</label>
-                <div className="relative">
-                  <input
-                    required
-                    type="password"
-                    name="password"
-                    className={`${inputClass} pl-10`}
-                  />
-                  <Lock className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Shield className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                  <p className="text-sm text-blue-700">
+                    A secure password will be auto-generated and emailed to the staff member upon registration.
+                  </p>
                 </div>
               </div>
             </div>
