@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { 
   FileText, Users, Settings, ShoppingCart, Truck, 
   UserPlus, Monitor, Search, PieChart, Mail, 
-  User, Wrench, Clock 
+  User, Wrench
 } from 'lucide-react';
 
 // Context
@@ -37,9 +37,6 @@ import StaffCustomerReports from './Pages/staff/StaffCustomerReports';
 import StaffInvoiceEmail from './Pages/staff/StaffInvoiceEmail';
 
 // Customer Pages
-import BookAppointment from './pages/customer/BookAppointment';
-import RequestPart from './pages/customer/RequestPart';
-import LeaveReview from './pages/customer/LeaveReview';
 import CustomerServices from './Pages/customer/CustomerServices';
 
 function App() {
@@ -63,7 +60,6 @@ function App() {
     { to: '/customer/book-appointment', label: 'Book Appointment', icon: Wrench },
     { to: '/customer/request-part',     label: 'Request Part',     icon: ShoppingCart },
     { to: '/customer/leave-review',     label: 'Leave Review',     icon: Search },
-    { to: '/customer/services',         label: 'Services',         icon: Clock },
   ];
 
   return (
@@ -105,10 +101,9 @@ function App() {
           {/* Customer Routes */}
           <Route path="/customer" element={<DashboardLayout title="Customer Portal" links={customerLinks} />}>
             <Route index element={<Navigate to="/customer/book-appointment" replace />} />
-            <Route path="book-appointment" element={<BookAppointment />} />
-            <Route path="request-part" element={<RequestPart />} />
-            <Route path="leave-review" element={<LeaveReview />} />
-            <Route path="services" element={<CustomerServices />} />
+            <Route path="book-appointment" element={<CustomerServices defaultTab="appointment" />} />
+            <Route path="request-part" element={<CustomerServices defaultTab="partRequest" />} />
+            <Route path="leave-review" element={<CustomerServices defaultTab="review" />} />
           </Route>
 
         </Routes>

@@ -99,6 +99,7 @@ const StaffInvoiceEmail = () => {
       try {
         setFetchingPreview(true);
         const res = await staffApi.getInvoiceDetails(selectedCustomerId, selectedInvoiceNo);
+        console.log('Invoice detail response:', res.data);
         setInvoicePreview(res.data);
       } catch (err) {
         // Show the actual backend error instead of silently failing

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-toastify';
-import { Calendar, Package, Star, RefreshCw, Wrench } from 'lucide-react';
+import { Calendar, Package, Star, RefreshCw } from 'lucide-react';
 import { customerApi } from '../../api/customerApi';
 
 // ─── Endpoint paths — update only these constants if the API routes ever change ─
@@ -13,12 +13,12 @@ const ENDPOINTS = {
   reviews:               '/customer/reviews',
 };
 
-// ─── Tab definitions — drives the tab bar and which panel is shown ────────────
-const TABS = [
-  { id: 'appointment', label: 'Book Appointment', icon: Calendar },
-  { id: 'partRequest', label: 'Request Part',     icon: Package  },
-  { id: 'review',      label: 'Review Service',   icon: Star     },
-];
+// ─── Tab metadata — drives the page header for each section ─────────────────
+const TAB_META = {
+  appointment: { title: 'Book Appointment', description: 'Book a new service appointment or manage your existing ones.', icon: Calendar },
+  partRequest: { title: 'Request Part',     description: 'Request an unavailable part for your vehicle.',                icon: Package  },
+  review:      { title: 'Review Service',   description: 'Leave a review for a completed service appointment.',          icon: Star     },
+};
 
 // ─── Service type options for the appointment form ────────────────────────────
 // Add or remove entries here to change what the customer can select.
@@ -211,10 +211,16 @@ const CardHeader = ({ icon: Icon, title, count }) => (
 // ══════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ══════════════════════════════════════════════════════════════════════════════
-const CustomerServices = () => {
+const CustomerServices = ({ defaultTab = 'appointment' }) => {
 
   // ── Active tab ──────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState('appointment');
+  const [activeTab, setActiveTab] = useState(defaultTab);
+
+  // Sync tab when the user navigates to a different sidebar link.
+  // useState(defaultTab) only runs on first mount; this effect handles prop changes.
+  useEffect(() => {
+    setActiveTab(defaultTab);
+  }, [defaultTab]);
 
   // ── Appointment tab state ───────────────────────────────────────────────────
   const [vehicles,       setVehicles]       = useState([]);  // customer's registered vehicles
@@ -462,37 +468,14 @@ const CustomerServices = () => {
   return (
     <div className="space-y-6">
 
-      {/* ── Page header + tab bar ─────────────────────────────────────────── */}
+      {/* ── Page header ──────────────────────────────────────────────────────── */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-
-        {/* Title row */}
-        <div className="px-6 py-5 border-b border-gray-200 bg-gray-50/50 flex items-center gap-3">
-          <Wrench className="w-6 h-6 text-blue-500" />
+        <div className="px-6 py-5 bg-gray-50/50 flex items-center gap-3">
+          {React.createElement(TAB_META[activeTab].icon, { className: 'w-6 h-6 text-blue-500' })}
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Customer Services</h1>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Book appointments, request unavailable parts, and review completed services.
-            </p>
+            <h1 className="text-2xl font-bold text-gray-800">{TAB_META[activeTab].title}</h1>
+            <p className="text-sm text-gray-500 mt-0.5">{TAB_META[activeTab].description}</p>
           </div>
-        </div>
-
-        {/* Tab bar */}
-        <div className="flex border-b border-gray-200 overflow-x-auto">
-          {TABS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-semibold
-                whitespace-nowrap transition-colors border-b-2 ${
-                  activeTab === id
-                    ? 'border-blue-500 text-blue-600 bg-blue-50/30'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </button>
-          ))}
         </div>
       </div>
 
