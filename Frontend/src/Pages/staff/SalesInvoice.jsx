@@ -72,7 +72,22 @@ const SalesInvoice = () => {
 
   const handleItemChange = (index, field, value) => {
     const newItems = [...items];
-    newItems[index][field] = field === 'part_ID' || field === 'quantity' ? parseInt(value) || '' : value;
+    let val = field === 'part_ID' || field === 'quantity' ? parseInt(value) || '' : value;
+    
+    if (field === 'quantity' && newItems[index].part_ID) {
+      const selectedPart = parts.find(p => p.part_ID === parseInt(newItems[index].part_ID));
+      if (selectedPart && val > selectedPart.stock_Quantity) {
+        val = selectedPart.stock_Quantity;
+        toast.warning(`Maximum available stock is ${selectedPart.stock_Quantity}`);
+      }
+    } else if (field === 'part_ID' && val !== '') {
+      const selectedPart = parts.find(p => p.part_ID === val);
+      if (selectedPart && newItems[index].quantity > selectedPart.stock_Quantity) {
+        newItems[index].quantity = Math.max(1, selectedPart.stock_Quantity);
+      }
+    }
+    
+    newItems[index][field] = val;
     setItems(newItems);
   };
 
@@ -135,6 +150,7 @@ const SalesInvoice = () => {
         form.reset();
         setItems([{ part_ID: '', quantity: 1 }]);
         fetchRecentInvoices();
+        fetchParts();
       } else {
         const errorData = await response.json().catch(() => null);
         toast.error(errorData?.message || 'Failed to create invoice.');
@@ -145,6 +161,29 @@ const SalesInvoice = () => {
       setLoading(false);
     }
   };
+
+  // Calculations for checkout sidebar
+  const subTotal = items.reduce((sum, item) => {
+    if (item.part_ID && item.quantity) {
+      const selectedPart = parts.find(p => p.part_ID === parseInt(item.part_ID));
+      if (selectedPart) {
+        return sum + (selectedPart.unit_Price * item.quantity);
+      }
+    }
+    return sum;
+  }, 0);
+
+  let discountAmount = 0;
+  if (subTotal > 5000) {
+    // Implicit loyalty discount
+    discountAmount = subTotal * 0.10;
+  }
+  
+  if (discountAmount > subTotal) {
+    discountAmount = subTotal; // prevent negative final total
+  }
+
+  const finalTotal = subTotal - discountAmount;
 
   const inputClass =
     "mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500";
@@ -160,138 +199,163 @@ const SalesInvoice = () => {
       </div>
 
       <div className="p-6">
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Header Info */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className={labelClass}>Select Customer</label>
-              <div className="relative">
-                <select
-                  required
-                  name="customer_ID"
-                  className={inputClass}
-                >
-                  <option value="">Select a customer</option>
-                  {customers.map((c) => (
-                    <option key={c.customer_ID} value={c.customer_ID}>
-                      {c.fullName} (ID: {c.customer_ID})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className={labelClass}>Payment Status</label>
-              <div className="flex gap-6 mt-3">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="radio"
-                    name="is_Paid"
-                    value="true"
-                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700 group-hover:text-blue-600">Paid</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="radio"
-                    name="is_Paid"
-                    value="false"
-                    defaultChecked
-                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700 group-hover:text-blue-600">Pending</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Items Section */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-              <h3 className="text-lg font-medium text-gray-900">Invoice Items</h3>
-              <button
-                type="button"
-                onClick={addItem}
-                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
-              >
-                <Plus className="w-4 h-4 mr-1" /> Add Item
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {items.map((item, index) => (
-                <div key={index} className="flex gap-4 items-end bg-gray-50/50 p-4 rounded-xl border border-gray-100 hover:border-gray-200">
-                  <div className="flex-1">
-                    <label className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1 block">Part</label>
-                    <select
-                      required
-                      value={item.part_ID}
-                      onChange={(e) => handleItemChange(index, 'part_ID', e.target.value)}
-                      className={inputClass}
-                    >
-                      <option value="">Select a part</option>
-                      {parts.map(p => (
-                        <option key={p.part_ID} value={p.part_ID}>
-                          {p.part_Name} (Price: ${p.unit_Price}, Stock: {p.stock_Quantity})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="w-32">
-                    <label className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1 block">Quantity</label>
-                    <div className="flex items-center">
-                      <button
-                        type="button"
-                        onClick={() => handleItemChange(index, 'quantity', Math.max(1, (item.quantity || 1) - 1))}
-                        className="p-2 border border-gray-300 bg-gray-50 text-gray-500 rounded-l-lg hover:bg-gray-200 transition-colors"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <input
-                        required
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                        className="w-full text-center px-2 py-2 border-y border-x-0 border-gray-300 text-sm focus:outline-none focus:ring-inset focus:ring-1 focus:ring-blue-500"
-                        style={{ MozAppearance: 'textfield' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleItemChange(index, 'quantity', (item.quantity || 0) + 1)}
-                        className="p-2 border border-gray-300 bg-gray-50 text-gray-500 rounded-r-lg hover:bg-gray-200 transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeItem(index)}
-                    disabled={items.length === 1}
-                    className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-0"
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          <div className="lg:col-span-2 space-y-8">
+            {/* Header Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className={labelClass}>Select Customer</label>
+                <div className="relative">
+                  <select
+                    required
+                    name="customer_ID"
+                    className={inputClass}
                   >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+                    <option value="">Select a customer</option>
+                    {customers.map((c) => (
+                      <option key={c.customer_ID} value={c.customer_ID}>
+                        {c.fullName} (ID: {c.customer_ID})
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              ))}
+              </div>
+              <div>
+                <label className={labelClass}>Payment Status</label>
+                <div className="flex gap-6 mt-3">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="is_Paid"
+                      value="true"
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700 group-hover:text-blue-600">Paid</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="is_Paid"
+                      value="false"
+                      defaultChecked
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700 group-hover:text-blue-600">Pending</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Items Section */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                <h3 className="text-lg font-medium text-gray-900">Invoice Items</h3>
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
+                >
+                  <Plus className="w-4 h-4 mr-1" /> Add Item
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {items.map((item, index) => (
+                  <div key={index} className="flex gap-4 items-end bg-gray-50/50 p-4 rounded-xl border border-gray-100 hover:border-gray-200">
+                    <div className="flex-1">
+                      <label className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1 block">Part</label>
+                      <select
+                        required
+                        value={item.part_ID}
+                        onChange={(e) => handleItemChange(index, 'part_ID', e.target.value)}
+                        className={inputClass}
+                      >
+                        <option value="">Select a part</option>
+                        {parts.map(p => (
+                          <option key={p.part_ID} value={p.part_ID} disabled={p.stock_Quantity === 0}>
+                            {p.part_Name} (Price: ${p.unit_Price}, Stock: {p.stock_Quantity})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="w-32">
+                      <label className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1 block">Quantity</label>
+                      <div className="flex items-center">
+                        <button
+                          type="button"
+                          onClick={() => handleItemChange(index, 'quantity', Math.max(1, (item.quantity || 1) - 1))}
+                          disabled={item.quantity <= 1}
+                          className="p-2 border border-gray-300 bg-gray-50 text-gray-500 rounded-l-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <input
+                          required
+                          type="number"
+                          min="1"
+                          max={parts.find(p => p.part_ID === parseInt(item.part_ID))?.stock_Quantity || 1}
+                          value={item.quantity}
+                          onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                          className="w-full text-center px-2 py-2 border-y border-x-0 border-gray-300 text-sm focus:outline-none focus:ring-inset focus:ring-1 focus:ring-blue-500"
+                          style={{ MozAppearance: 'textfield' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleItemChange(index, 'quantity', (item.quantity || 0) + 1)}
+                          disabled={!item.part_ID || item.quantity >= (parts.find(p => p.part_ID === parseInt(item.part_ID))?.stock_Quantity || 1)}
+                          className="p-2 border border-gray-300 bg-gray-50 text-gray-500 rounded-r-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeItem(index)}
+                      disabled={items.length === 1}
+                      className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-0"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Action Footer */}
-          <div className="pt-6 flex justify-end border-t border-gray-100">
-            <button
-              type="submit"
-              disabled={loading}
-              className={`flex items-center gap-2 px-8 py-3 text-white font-semibold text-sm rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg'}`}
-            >
-                <>
-                  <FileText className="w-4 h-4" />
-                  Generate Sales Invoice
-                </>
-            </button>
+          <div className="lg:col-span-1">
+            <div className="bg-gray-50/50 p-6 rounded-xl border border-gray-200 sticky top-6 space-y-6">
+              <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2">Checkout Summary</h3>
+              
+              <div className="space-y-3 pt-4">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Subtotal</span>
+                  <span>${subTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-red-500">
+                  <span>Discount</span>
+                  <span>-${discountAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-200">
+                  <span>Total</span>
+                  <span>${finalTotal.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={loading || items.length === 0 || (items.length === 1 && !items[0].part_ID)}
+                  className={`w-full flex items-center justify-center gap-2 px-8 py-3 text-white font-semibold text-sm rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${loading || items.length === 0 || (items.length === 1 && !items[0].part_ID) ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg'}`}
+                >
+                    <FileText className="w-4 h-4" />
+                    Generate Sales Invoice
+                </button>
+              </div>
+            </div>
           </div>
+
         </form>
       </div>
 
@@ -315,22 +379,24 @@ const SalesInvoice = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {recentInvoices.map((inv) => (
-                  <tr key={inv.invoice_No} className="hover:bg-white transition-colors">
-                    <td className="py-3 px-4 text-sm font-medium text-gray-900">#{inv.invoice_No}</td>
-                    <td className="py-3 px-4 text-sm text-gray-500">
-                      {new Date(inv.sales_Date).toLocaleDateString()}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-gray-700">{inv.customer_Name}</td>
-                    <td className="py-3 px-4 text-sm text-gray-500">{inv.staff_Name}</td>
-                    <td className="py-3 px-4 text-sm font-semibold text-gray-900">${inv.final_Total.toFixed(2)}</td>
-                    <td className="py-3 px-4 text-sm">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        inv.is_Paid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {inv.is_Paid ? 'Paid' : 'Pending'}
-                      </span>
-                    </td>
-                  </tr>
+                  <React.Fragment key={inv.invoice_No}>
+                    <tr className="hover:bg-gray-50 transition-colors">
+                      <td className="py-3 px-4 text-sm font-medium text-gray-900">#{inv.invoice_No}</td>
+                      <td className="py-3 px-4 text-sm text-gray-500">
+                        {new Date(inv.sales_Date).toLocaleDateString()}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-700">{inv.customer_Name}</td>
+                      <td className="py-3 px-4 text-sm text-gray-500">{inv.staff_Name}</td>
+                      <td className="py-3 px-4 text-sm font-semibold text-gray-900">${inv.final_Total.toFixed(2)}</td>
+                      <td className="py-3 px-4 text-sm">
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          inv.is_Paid ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {inv.is_Paid ? 'Paid' : 'Pending'}
+                        </span>
+                      </td>
+                    </tr>
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
@@ -342,3 +408,4 @@ const SalesInvoice = () => {
 };
 
 export default SalesInvoice;
+

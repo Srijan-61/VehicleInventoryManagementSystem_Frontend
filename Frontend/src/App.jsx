@@ -42,17 +42,17 @@ import CustomerServices from './Pages/customer/CustomerServices';
 function App() {
   const adminLinks = [
     { to: '/admin/reports', label: 'Financial Reports', icon: FileText },
-    { to: '/admin/staff', label: 'Register Staff', icon: Users },
-    { to: '/admin/parts-management', label: 'Parts Management', icon: Settings },
     { to: '/admin/invoices', label: 'Purchase Invoices/Restock', icon: ShoppingCart },
-    { to: '/admin/vendors', label: 'Vendor Management', icon: Truck }
+    { to: '/admin/parts-management', label: 'Parts Management', icon: Settings },
+    { to: '/admin/vendors', label: 'Vendor Management', icon: Truck },
+    { to: '/admin/staff', label: 'Register Staff', icon: Users }
   ];
 
   const staffLinks = [
-    { to: '/staff/register-customer', label: 'Register Customer', icon: UserPlus },
-    { to: '/staff/sales-invoice', label: 'Sales Invoice', icon: FileText },
-    { to: '/staff/search', label: 'Customer Search & Details', icon: Search },
     { to: '/staff/customer-reports', label: 'Customer Reports', icon: PieChart },
+    { to: '/staff/register-customer', label: 'Register Customer', icon: UserPlus },
+    { to: '/staff/search', label: 'Customer Search & Details', icon: Search },
+    { to: '/staff/sales-invoice', label: 'Sales Invoice', icon: FileText },
     { to: '/staff/invoice-email', label: 'Send Invoice Email', icon: Mail }
   ];
 
