@@ -1,13 +1,23 @@
 import { apiGet, apiPost, apiPut, apiDelete } from "./apiClient";
 
-// GET /api/admin/parts — fetch full parts list
+// All functions here use apiClient.js which automatically:
+//   - attaches the JWT token from localStorage as an Authorization header
+//   - sets Content-Type to application/json
+//   - extracts a readable error message from any failed response
+
+// Fetch the full list of all parts currently in the inventory
 export const getAllParts = () => apiGet('/admin/parts');
 
-// POST /api/admin/parts/purchase — submit a purchase order
+// Submit a purchase order to the backend.
+// If the part already exists (part_ID is a number), the backend increases its stock_Quantity.
+// If it is a new part (part_ID is null), the backend creates a new part record first.
 export const purchaseParts = (payload) => apiPost('/admin/parts/purchase', payload);
 
-// PUT /api/admin/parts/{partId} — update an existing part
+// Update the details of an existing part — name, brand, category, price, stock, reorder level
 export const updatePart = (partId, payload) => apiPut(`/admin/parts/${partId}`, payload);
 
-// DELETE /api/admin/parts/{partId} — remove a part
+// Permanently remove a part from the inventory by its ID
 export const deletePart = (partId) => apiDelete(`/admin/parts/${partId}`);
+
+// Fetch the list of vendors — used to fill the vendor dropdown in the purchase form
+export const getVendors = () => apiGet('/admin/vendors');

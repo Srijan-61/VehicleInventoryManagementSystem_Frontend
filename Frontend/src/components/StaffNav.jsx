@@ -1,20 +1,29 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
+// Staff portal sidebar — fixed on the left side of every staff page.
+// Renders navigation links from the navLinks array and handles logout.
 const StaffNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Clear the stored JWT token and redirect back to the login page.
+  // Uses toast instead of alert so the message matches the rest of the app.
   const handleLogout = () => {
     localStorage.removeItem('token');
-    alert('Logged out successfully');
+    toast.info('Logged out successfully');
     navigate('/login');
   };
 
+  // Add new staff pages here — they will automatically appear in the sidebar
   const navLinks = [
     { name: 'Overview', path: '/staff' },
     { name: 'Register Customer', path: '/staff/register-customer' },
-    { name: 'Create Invoice', path: '/staff/create-invoice' },
+    { name: 'Sales Invoice', path: '/staff/sales-invoice' },
+    { name: 'Customer Search', path: '/staff/search' },
+    { name: 'Customer Reports', path: '/staff/customer-reports' },
+    { name: 'Send Invoice Email', path: '/staff/invoice-email' },
   ];
 
   return (
@@ -25,6 +34,7 @@ const StaffNav = () => {
       <nav className="flex-1 p-4">
         <ul className="space-y-2">
           {navLinks.map((link) => {
+            // True when the current URL matches this link's path — used to highlight the active link
             const isActive = location.pathname === link.path || location.pathname === link.path + '/';
             return (
               <li key={link.path}>
