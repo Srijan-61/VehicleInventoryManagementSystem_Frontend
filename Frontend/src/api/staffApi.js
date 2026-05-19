@@ -63,4 +63,37 @@ export const staffApi = {
 
   // Fetch recent invoices — added from main branch
   getRecentInvoices: (count = 10) => apiClient.get(`/staff/recent-invoices?count=${count}`),
+
+  // ── Approval endpoints ────────────────────────────────────────────────────
+  // Fetch all appointments that are currently in Pending status
+  getPendingAppointments: () =>
+    apiClient.get('/staff/approvals/appointments/pending'),
+
+  // Move a Pending appointment to Confirmed
+  approveAppointment: (appointmentId) =>
+    apiClient.put(`/staff/approvals/appointments/${appointmentId}/approve`),
+
+  // Move an appointment to Rejected (cancels it from staff side)
+  rejectAppointment: (appointmentId) =>
+    apiClient.put(`/staff/approvals/appointments/${appointmentId}/reject`),
+
+  // Mark an appointment as Completed — required before customer can leave a review
+  completeAppointment: (appointmentId) =>
+    apiClient.put(`/staff/approvals/appointments/${appointmentId}/complete`),
+
+  // Fetch all appointments that are currently in Approved status
+  getApprovedAppointments: () =>
+    apiClient.get('/staff/approvals/appointments/approved'),
+
+  // Fetch all part requests that are currently in Pending status
+  getPendingPartRequests: () =>
+    apiClient.get('/staff/approvals/parts/pending'),
+
+  // Approve a customer part request
+  approvePartRequest: (requestId) =>
+    apiClient.put(`/staff/approvals/parts/${requestId}/approve`),
+
+  // Reject a customer part request
+  rejectPartRequest: (requestId) =>
+    apiClient.put(`/staff/approvals/parts/${requestId}/reject`),
 };
