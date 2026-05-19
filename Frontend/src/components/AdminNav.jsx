@@ -21,8 +21,8 @@ const AdminNav = () => {
   // Add new admin pages here — they will automatically appear in the sidebar
   const navLinks = [
     { to: '/admin',                  label: 'Dashboard',         icon: LayoutDashboard },
-    { to: '/admin/register-staff',   label: 'Register Staff',    icon: UserPlus },
     { to: '/admin/parts-management', label: 'Parts Management',  icon: Settings },
+    { to: '/admin/register-staff',   label: 'Register Staff',    icon: UserPlus },
   ];
 
   return (

@@ -18,11 +18,11 @@ const StaffNav = () => {
 
   // Add new staff pages here — they will automatically appear in the sidebar
   const navLinks = [
+    { name: 'Customer Reports', path: '/staff/customer-reports' },
     { name: 'Overview', path: '/staff' },
     { name: 'Register Customer', path: '/staff/register-customer' },
-    { name: 'Sales Invoice', path: '/staff/sales-invoice' },
     { name: 'Customer Search', path: '/staff/search' },
-    { name: 'Customer Reports', path: '/staff/customer-reports' },
+    { name: 'Sales Invoice', path: '/staff/sales-invoice' },
     { name: 'Send Invoice Email', path: '/staff/invoice-email' },
     { name: 'Approvals', path: '/staff/approvals' },
   ];
