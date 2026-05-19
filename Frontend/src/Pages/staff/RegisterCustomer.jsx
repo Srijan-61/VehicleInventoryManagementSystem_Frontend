@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import { User, Mail, Phone, MapPin, Lock, FileText, Calendar, Truck, Activity, Repeat } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Shield, FileText, Calendar, Truck, Activity, Repeat } from 'lucide-react';
 
 const RegisterCustomer = () => {
   const [loading, setLoading] = useState(false);
@@ -15,7 +15,6 @@ const RegisterCustomer = () => {
       email: form.email.value,
       phoneNumber: form.phoneNumber.value,
       address: form.address.value,
-      password: form.password.value,
       reg_Number: form.reg_Number.value,
       make: form.make.value,
       model: form.model.value,
@@ -42,7 +41,7 @@ const RegisterCustomer = () => {
 
       if (response.ok) {
         const data = await response.json().catch(() => null);
-        toast.success(data?.message || 'Customer registered successfully!');
+        toast.success(data?.message || 'Customer registered successfully! Credentials sent via email.');
         form.reset();
       } else {
         const errorData = await response.json().catch(() => null);
@@ -63,7 +62,7 @@ const RegisterCustomer = () => {
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div className="px-6 py-5 border-b border-gray-200 bg-gray-50/50">
         <h1 className="text-2xl font-bold text-gray-800">Register Customer</h1>
-        <p className="text-sm text-gray-500 mt-1">Add a new customer and their vehicle details to the system.</p>
+        <p className="text-sm text-gray-500 mt-1">Add a new customer and their vehicle. A secure password will be auto-generated and emailed to them.</p>
       </div>
 
       <div className="p-6">
@@ -91,8 +90,12 @@ const RegisterCustomer = () => {
                 <input required name="address" className={inputClass} />
               </div>
               <div className="md:col-span-2">
-                <label className={labelClass}>Password</label>
-                <input required type="password" name="password" className={inputClass} />
+                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Shield className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                  <p className="text-sm text-blue-700">
+                    A secure password will be auto-generated and emailed to the customer upon registration.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

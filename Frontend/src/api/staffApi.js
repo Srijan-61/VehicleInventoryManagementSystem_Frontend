@@ -14,6 +14,7 @@ export const staffApi = {
 
   // Fetch a summary report of all registered customers — used on the reports page
   getCustomerReports: () => apiClient.get('/staff/customer-reports'),
+<<<<<<< HEAD
 
   // Get the full customer list for the "Select Customer" dropdown
   getCustomers: () => apiClient.get('/staff/customers'),
@@ -59,4 +60,7 @@ export const staffApi = {
   // Accepts the full path-plus-querystring built by the component.
   fetchReport: (urlWithParams) =>
     apiClient.get(urlWithParams),
+
+  // Fetch recent invoices — added from main branch
+  getRecentInvoices: (count = 10) => apiClient.get(`/staff/recent-invoices?count=${count}`),
 };
