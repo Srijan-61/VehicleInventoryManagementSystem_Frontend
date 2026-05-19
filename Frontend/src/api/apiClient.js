@@ -17,6 +17,19 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Automatically log out and redirect to login when the server rejects the token.
+// A 401 Unauthorized response means the JWT has expired or is invalid.
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Extract a human-readable error message from an Axios error
 const extractError = (err) => {
   const data = err.response?.data;
