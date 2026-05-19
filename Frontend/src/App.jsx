@@ -22,6 +22,7 @@ import CustomerRegister from './pages/auth/CustomerRegister';
 import FinancialReports from './pages/admin/FinancialReports';
 import ManageStaff from './pages/admin/ManageStaff';
 import ManageParts from './pages/admin/ManageParts';
+import AdminPartsManagement from './Pages/admin/AdminPartsManagement';
 import PurchaseInvoices from './pages/admin/PurchaseInvoices';
 import ManageVendors from './pages/admin/ManageVendors';
 
@@ -30,18 +31,20 @@ import RegisterCustomer from './Pages/staff/RegisterCustomer';
 import SalesInvoice from './Pages/staff/SalesInvoice';
 import CustomerSearch from './Pages/staff/CustomerSearch';
 import CustomerReports from './Pages/staff/CustomerReports';
-import SendEmailInvoice from './Pages/staff/SendEmailInvoice';
+import StaffCustomerReports from './Pages/staff/StaffCustomerReports';
+import StaffInvoiceEmail from './Pages/staff/StaffInvoiceEmail';
 
 // Customer Pages
 import BookAppointment from './pages/customer/BookAppointment';
 import RequestPart from './pages/customer/RequestPart';
 import LeaveReview from './pages/customer/LeaveReview';
+import CustomerServices from './Pages/customer/CustomerServices';
 
 function App() {
   const adminLinks = [
     { to: '/admin/reports', label: 'Financial Reports', icon: FileText },
     { to: '/admin/staff', label: 'Register Staff', icon: Users },
-    { to: '/admin/parts', label: 'Parts Management', icon: Settings },
+    { to: '/admin/parts-management', label: 'Parts Management', icon: Settings },
     { to: '/admin/invoices', label: 'Purchase Invoices/Restock', icon: ShoppingCart },
     { to: '/admin/vendors', label: 'Vendor Management', icon: Truck }
   ];
@@ -50,14 +53,15 @@ function App() {
     { to: '/staff/register-customer', label: 'Register Customer', icon: UserPlus },
     { to: '/staff/sales-invoice', label: 'Sales Invoice', icon: FileText },
     { to: '/staff/search', label: 'Customer Search & Details', icon: Search },
-    { to: '/staff/reports', label: 'Customer Reports', icon: PieChart },
-    { to: '/staff/email-invoice', label: 'Send Email Invoice', icon: Mail }
+    { to: '/staff/customer-reports', label: 'Customer Reports', icon: PieChart },
+    { to: '/staff/invoice-email', label: 'Send Invoice Email', icon: Mail }
   ];
 
   const customerLinks = [
     { to: '/customer/book-appointment', label: 'Book Appointment', icon: Wrench },
-    { to: '/customer/request-part', label: 'Request Part', icon: ShoppingCart },
-    { to: '/customer/leave-review', label: 'Leave Review', icon: Search }
+    { to: '/customer/request-part',     label: 'Request Part',     icon: ShoppingCart },
+    { to: '/customer/leave-review',     label: 'Leave Review',     icon: Search },
+    { to: '/customer/services',         label: 'Services',         icon: Clock },
   ];
 
   return (
@@ -78,6 +82,7 @@ function App() {
             <Route path="reports" element={<FinancialReports />} />
             <Route path="staff" element={<ManageStaff />} />
             <Route path="parts" element={<ManageParts />} />
+            <Route path="parts-management" element={<AdminPartsManagement />} />
             <Route path="invoices" element={<PurchaseInvoices />} />
             <Route path="vendors" element={<ManageVendors />} />
           </Route>
@@ -89,7 +94,8 @@ function App() {
             <Route path="sales-invoice" element={<SalesInvoice />} />
             <Route path="search" element={<CustomerSearch />} />
             <Route path="reports" element={<CustomerReports />} />
-            <Route path="email-invoice" element={<SendEmailInvoice />} />
+            <Route path="customer-reports" element={<StaffCustomerReports />} />
+            <Route path="invoice-email" element={<StaffInvoiceEmail />} />
           </Route>
 
           {/* Customer Routes */}
@@ -98,6 +104,7 @@ function App() {
             <Route path="book-appointment" element={<BookAppointment />} />
             <Route path="request-part" element={<RequestPart />} />
             <Route path="leave-review" element={<LeaveReview />} />
+            <Route path="services" element={<CustomerServices />} />
           </Route>
 
         </Routes>
