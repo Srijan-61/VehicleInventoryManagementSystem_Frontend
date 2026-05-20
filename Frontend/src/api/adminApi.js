@@ -10,21 +10,21 @@ export const adminApi = {
   // F1 – Financial Reports
   getDailyReport: async (date) => {
     const token = localStorage.getItem('token');
-    const response = await fetch(`http://localhost:5251/api/FinancialReport/daily?date=${date}`, {
+    const response = await fetch(`https://localhost:7111/api/FinancialReport/daily?date=${date}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     return response.json();
   },
   getMonthlyReport: async (year, month) => {
     const token = localStorage.getItem('token');
-    const response = await fetch(`http://localhost:5251/api/FinancialReport/monthly?year=${year}&month=${month}`, {
+    const response = await fetch(`https://localhost:7111/api/FinancialReport/monthly?year=${year}&month=${month}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     return response.json();
   },
   getYearlyReport: async (year) => {
     const token = localStorage.getItem('token');
-    const response = await fetch(`http://localhost:5251/api/FinancialReport/yearly?year=${year}`, {
+    const response = await fetch(`https://localhost:7111/api/FinancialReport/yearly?year=${year}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     return response.json();

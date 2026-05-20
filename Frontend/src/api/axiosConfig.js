@@ -6,7 +6,7 @@ import axios from 'axios';
 // (expired or invalid token) automatically logs the user out and redirects to login.
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5251/api',
+  baseURL: 'https://localhost:7111/api',
   headers: {
     'Content-Type': 'application/json',
   },
