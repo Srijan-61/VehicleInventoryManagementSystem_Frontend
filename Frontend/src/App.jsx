@@ -54,6 +54,7 @@ function App() {
     { to: "/staff/search", label: "Customer Search & Details", icon: Search },
     { to: "/staff/sales-invoice", label: "Sales Invoice", icon: FileText },
     { to: "/staff/invoice-email", label: "Send Invoice Email", icon: Mail },
+    { to: "/staff/approvals", label: "Approvals", icon: ClipboardList },
   ];
 
   const customerLinks = [
@@ -116,6 +117,10 @@ function App() {
             <Route
               path="invoice-email"
               element={<StaffInvoiceEmail />}
+            />
+            <Route
+              path="approvals"
+              element={<StaffApproval />}
             />
           </Route>
 
