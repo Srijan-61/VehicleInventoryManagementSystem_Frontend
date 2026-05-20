@@ -12,7 +12,7 @@ function CustomerDetails() {
   useEffect(() => {
     const fetchCustomerDetails = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/Staff/customers/${id}`, {
+        const res = await fetch(`https://localhost:7111/api/Staff/customers/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

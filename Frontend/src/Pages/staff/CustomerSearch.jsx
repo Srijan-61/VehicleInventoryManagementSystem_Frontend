@@ -19,7 +19,7 @@ const CustomerSearch = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/Staff/search-customers?query=${query}`,
+        `https://localhost:7111/api/Staff/search-customers?query=${query}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

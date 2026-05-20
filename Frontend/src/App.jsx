@@ -23,12 +23,14 @@ import ManageStaff from './pages/admin/ManageStaff';
 import ManageParts from './pages/admin/ManageParts';
 import AdminPartsManagement from './Pages/admin/AdminPartsManagement';
 import PurchaseInvoices from './pages/admin/PurchaseInvoices';
-import ManageVendors from './pages/admin/ManageVendors';
+import VendorPage from './Pages/admin/VendorPage';
+import StockAlerts from './Pages/admin/StockAlerts';
 
 // Staff Pages
 import RegisterCustomer from './Pages/staff/RegisterCustomer';
 import SalesInvoice from './Pages/staff/SalesInvoice';
 import CustomerSearch from './Pages/staff/CustomerSearch';
+import CustomerDetails from './Pages/staff/CustomerDetails';
 import CustomerReports from './Pages/staff/CustomerReports';
 import StaffCustomerReports from './Pages/staff/StaffCustomerReports';
 import StaffInvoiceEmail from './Pages/staff/StaffInvoiceEmail';
