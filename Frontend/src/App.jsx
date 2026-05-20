@@ -1,19 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
-import {
-  FileText,
-  Users,
-  Settings,
-  ShoppingCart,
-  Truck,
-  UserPlus,
-  Search,
-  PieChart,
-  Mail,
-  Wrench,
-} from "lucide-react";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { 
+  FileText, Users, Settings, ShoppingCart, Truck, 
+  UserPlus, Monitor, Search, PieChart, Mail, 
+  User, Wrench, ClipboardList
+} from 'lucide-react';
 
 import { AuthProvider } from "./context/AuthContext";
 
@@ -25,30 +17,32 @@ import CustomerRegister from "./Pages/auth/CustomerRegister";
 import ForgotPassword from "./Pages/auth/ForgotPassword";
 import ResetPassword from "./Pages/auth/ResetPassword";
 
-import FinancialReports from "./pages/admin/FinancialReports";
-import ManageStaff from "./pages/admin/ManageStaff";
-import ManageParts from "./pages/admin/ManageParts";
-import AdminPartsManagement from "./Pages/admin/AdminPartsManagement";
-import PurchaseInvoices from "./pages/admin/PurchaseInvoices";
-import VendorPage from "./Pages/admin/VendorPage";
+// Admin Pages
+import FinancialReports from './pages/admin/FinancialReports';
+import ManageStaff from './pages/admin/ManageStaff';
+import ManageParts from './pages/admin/ManageParts';
+import AdminPartsManagement from './Pages/admin/AdminPartsManagement';
+import PurchaseInvoices from './pages/admin/PurchaseInvoices';
+import ManageVendors from './pages/admin/ManageVendors';
 
-import RegisterCustomer from "./Pages/staff/RegisterCustomer";
-import SalesInvoice from "./Pages/staff/SalesInvoice";
-import CustomerSearch from "./Pages/staff/CustomerSearch";
-import CustomerDetails from "./Pages/staff/CustomerDetails";
-import CustomerReports from "./Pages/staff/CustomerReports";
-import StaffCustomerReports from "./Pages/staff/StaffCustomerReports";
-import StaffInvoiceEmail from "./Pages/staff/StaffInvoiceEmail";
+// Staff Pages
+import RegisterCustomer from './Pages/staff/RegisterCustomer';
+import SalesInvoice from './Pages/staff/SalesInvoice';
+import CustomerSearch from './Pages/staff/CustomerSearch';
+import CustomerReports from './Pages/staff/CustomerReports';
+import StaffCustomerReports from './Pages/staff/StaffCustomerReports';
+import StaffInvoiceEmail from './Pages/staff/StaffInvoiceEmail';
+import StaffApproval from './Pages/staff/StaffApproval';
 
 import CustomerServices from "./Pages/customer/CustomerServices";
 
 function App() {
   const adminLinks = [
-    { to: "/admin/reports", label: "Financial Reports", icon: FileText },
-    { to: "/admin/invoices", label: "Purchase Invoices/Restock", icon: ShoppingCart },
-    { to: "/admin/parts-management", label: "Parts Management", icon: Settings },
-    { to: "/admin/vendors", label: "Vendor Management", icon: Truck },
-    { to: "/admin/staff", label: "Register Staff", icon: Users },
+    { to: '/admin/reports', label: 'Financial Reports', icon: FileText },
+    { to: '/admin/invoices', label: 'Purchase Invoices/Restock', icon: ShoppingCart },
+    { to: '/admin/parts-management', label: 'Parts Management', icon: Settings },
+    { to: '/admin/vendors', label: 'Vendor Management', icon: Truck },
+    { to: '/admin/staff', label: 'Register Staff', icon: Users }
   ];
 
   const staffLinks = [
@@ -86,6 +80,7 @@ function App() {
           >
             <Route index element={<Navigate to="/admin/reports" replace />} />
             <Route path="reports" element={<FinancialReports />} />
+            <Route path="alerts" element={<StockAlerts />} />
             <Route path="staff" element={<ManageStaff />} />
             <Route path="parts" element={<ManageParts />} />
             <Route path="parts-management" element={<AdminPartsManagement />} />

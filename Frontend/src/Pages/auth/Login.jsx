@@ -14,52 +14,60 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+<<<<<<< HEAD
       const response = await fetch("http://localhost:5000/api/Auth/login", {
+=======
+      let response = await fetch("https://localhost:7111/api/CustomerSelfRegister/login", {
+>>>>>>> 163436adc05ba68365de63a54ceea7574e21eacf
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      let data = await response.json();
+      let isCustomer = false;
+
+      // If customer login fails, try admin login
+      if (!response.ok) {
+        response = await fetch("https://localhost:7111/api/Auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        data = await response.json();
+      } else {
+        isCustomer = true;
+      }
 
       if (response.ok) {
-        const token = data.Token || data.token;
+        const token = data.token || data.Token;
         localStorage.setItem("token", token);
 
-        try {
-          // Decode the JWT payload to get the user's role
-          const payload = JSON.parse(atob(token.split(".")[1]));
-          // ASP.NET Core often stores the role in this schema URI or just 'role'
-          const role =
-            payload[
-              "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-            ] || payload.role;
+        toast.success("Login successful!");
 
-          toast.success("Login successful!");
-
-          // Navigate based on role
-          if (role === "Staff") {
-            navigate("/staff");
-          } else if (role === "Customer") {
-            navigate("/customer");
-          } else {
-            navigate("/admin"); // Default or Admin
+        // Redirect based on which login succeeded
+        if (isCustomer) {
+          navigate("/customer");
+        } else {
+          // Admin/Staff - decode role from token
+          try {
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            const role = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || payload.role;
+            
+            if (role === "Staff") {
+              navigate("/staff");
+            } else {
+              navigate("/admin");
+            }
+          } catch (e) {
+            navigate("/admin");
           }
-        } catch (e) {
-          toast.success("Login successful!");
-          navigate("/admin");
         }
       } else {
-        toast.error(
-          data.Message ||
-            data.message ||
-            "Login failed. Please check your credentials.",
-        );
+        toast.error("Invalid email or password");
       }
     } catch (err) {
-      toast.error("An error occurred while connecting to the server.");
+      toast.error("Login failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +75,6 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen bg-white font-inter">
-      {/* Left Column - Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center p-8 lg:p-24 xl:p-32 relative z-10">
         <div className="w-full max-w-md mx-auto">
           <div className="mb-10">
@@ -81,10 +88,7 @@ const Login = () => {
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label
-                htmlFor="email"
-                className="block text-sm font-semibold text-slate-700"
-              >
+              <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
                 Email Address
               </label>
               <div className="relative">
@@ -104,10 +108,7 @@ const Login = () => {
             </div>
 
             <div className="space-y-2">
-              <label
-                htmlFor="password"
-                className="block text-sm font-semibold text-slate-700"
-              >
+              <label htmlFor="password" className="block text-sm font-semibold text-slate-700">
                 Password
               </label>
               <div className="relative">
@@ -125,10 +126,7 @@ const Login = () => {
                 />
               </div>
               <div className="flex justify-end mt-1">
-                <Link
-                  to="/forgot-password"
-                  className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-                >
+                <Link to="/forgot-password" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
                   Forgot Password?
                 </Link>
               </div>
@@ -138,41 +136,27 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center items-center gap-2 py-4 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg "
+                className="w-full flex justify-center items-center gap-2 py-4 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg"
               >
-                {isLoading ? (
-                  <span className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white"></span>
-                ) : (
-                  <LogIn className="w-5 h-5" />
-                )}
                 {isLoading ? "Authenticating..." : "Log In"}
               </button>
             </div>
           </form>
 
-          <div className="mt-8 text-center sm:text-left">
+          <div className="mt-8 text-center">
             <p className="text-sm font-medium text-slate-500">
-              Don't have an account yet?{" "}
-              <Link
-                to="/register"
-                className="text-blue-600 hover:text-blue-700 font-bold"
-              >
-                Sign-up
+              Don't have an account?{" "}
+              <Link to="/register" className="text-blue-600 hover:text-blue-700 font-bold">
+                Sign up
               </Link>
             </p>
           </div>
         </div>
       </div>
 
-      {/* Right Column - Illustration / Design */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-white items-center justify-center overflow-hidden">
-        {/* Vector Art Image */}
         <div className="relative z-10 w-full h-full flex items-center justify-center p-12">
-          <img
-            src="/src/assets/login vector art.svg"
-            alt="Login Illustration"
-            className="max-w-full max-h-full object-contain"
-          />
+          <img src="/src/assets/login vector art.svg" alt="Login Illustration" className="max-w-full max-h-full object-contain" />
         </div>
       </div>
     </div>

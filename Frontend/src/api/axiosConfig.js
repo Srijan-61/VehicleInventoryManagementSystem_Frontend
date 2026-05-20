@@ -1,12 +1,12 @@
 import axios from 'axios';
 
 // Axios instance used by staffApi.js for all staff and auth-related API calls.
-// It connects directly to the backend using VITE_API_URL (or falls back to localhost:7111).
+// It connects directly to the backend using VITE_API_URL (or falls back to localhost:5251).
 // Every request automatically gets the JWT bearer token, and any 401 response
 // (expired or invalid token) automatically logs the user out and redirects to login.
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://localhost:7111/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5251/api',
   headers: {
     'Content-Type': 'application/json',
   },
