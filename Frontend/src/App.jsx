@@ -3,8 +3,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { 
   FileText, Users, Settings, ShoppingCart, Truck, 
-  UserPlus, Monitor, Search, PieChart, Mail, 
-  User, Wrench, ClipboardList
+  UserPlus, Search, PieChart, Mail, Wrench, AlertTriangle, ClipboardList
 } from 'lucide-react';
 
 // Context
@@ -26,7 +25,9 @@ import ManageStaff from './pages/admin/ManageStaff';
 import ManageParts from './pages/admin/ManageParts';
 import AdminPartsManagement from './Pages/admin/AdminPartsManagement';
 import PurchaseInvoices from './pages/admin/PurchaseInvoices';
+
 import ManageVendors from './pages/admin/ManageVendors';
+import StockAlerts from './pages/admin/StockAlerts';
 
 // Staff Pages
 import RegisterCustomer from './Pages/staff/RegisterCustomer';
@@ -44,6 +45,7 @@ import CustomerHistory from './Pages/customer/CustomerHistory';
 function App() {
   const adminLinks = [
     { to: '/admin/reports', label: 'Financial Reports', icon: FileText },
+    { to: '/admin/alerts', label: 'Stock Alerts', icon: AlertTriangle },
     { to: '/admin/invoices', label: 'Purchase Invoices/Restock', icon: ShoppingCart },
     { to: '/admin/parts-management', label: 'Parts Management', icon: Settings },
     { to: '/admin/vendors', label: 'Vendor Management', icon: Truck },
@@ -84,6 +86,7 @@ function App() {
           <Route path="/admin" element={<DashboardLayout title="Admin Portal" links={adminLinks} />}>
             <Route index element={<Navigate to="/admin/reports" replace />} />
             <Route path="reports" element={<FinancialReports />} />
+            <Route path="alerts" element={<StockAlerts />} />
             <Route path="staff" element={<ManageStaff />} />
             <Route path="parts" element={<ManageParts />} />
             <Route path="parts-management" element={<AdminPartsManagement />} />
