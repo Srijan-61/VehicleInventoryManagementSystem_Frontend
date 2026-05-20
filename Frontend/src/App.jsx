@@ -38,6 +38,7 @@ import StaffInvoiceEmail from './Pages/staff/StaffInvoiceEmail';
 
 // Customer Pages
 import CustomerServices from './Pages/customer/CustomerServices';
+import CustomerHistory from './Pages/customer/CustomerHistory';
 
 function App() {
   const adminLinks = [
@@ -60,6 +61,7 @@ function App() {
     { to: '/customer/book-appointment', label: 'Book Appointment', icon: Wrench },
     { to: '/customer/request-part',     label: 'Request Part',     icon: ShoppingCart },
     { to: '/customer/leave-review',     label: 'Leave Review',     icon: Search },
+    { to: '/customer/history',          label: 'Service History',  icon: FileText },
   ];
 
   return (
@@ -104,6 +106,7 @@ function App() {
             <Route path="book-appointment" element={<CustomerServices defaultTab="appointment" />} />
             <Route path="request-part" element={<CustomerServices defaultTab="partRequest" />} />
             <Route path="leave-review" element={<CustomerServices defaultTab="review" />} />
+            <Route path="history" element={<CustomerHistory />} />
           </Route>
 
         </Routes>
