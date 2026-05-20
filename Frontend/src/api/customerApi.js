@@ -35,6 +35,11 @@ export const customerApi = {
   // quantity (number), reason, urgency ('Low' | 'Medium' | 'High').
   createPartRequest: (data) => apiClient.post('/customer/part-requests', data),
 
+  // Delete a part request by ID. Only allowed while the request is still Pending.
+  deletePartRequest:  (id) => apiClient.delete(`/customer/part-requests/${id}`),
+  // Fallback cancel (PUT) in case the backend doesn't expose DELETE.
+  cancelPartRequest:  (id) => apiClient.put(`/customer/part-requests/${id}/cancel`),
+
   // ── Reviews ───────────────────────────────────────────────────────────────
   // Get only the appointments with status === 'Completed'.
   // Used to populate the review dropdown — not all appointments can be reviewed.

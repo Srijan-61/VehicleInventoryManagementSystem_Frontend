@@ -30,7 +30,8 @@ const AdminPartsPage = () => {
   const fetchParts = async () => {
     setLoading(true);
     try {
-      const data = await getAllParts();
+      const res = await getAllParts();
+      const data = res?.data;
       setParts(Array.isArray(data) ? data : []);
     } catch (err) {
       toast.error(err.message || 'Failed to load parts.');

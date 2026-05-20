@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { 
   FileText, Users, Settings, ShoppingCart, Truck, 
   UserPlus, Monitor, Search, PieChart, Mail, 
-  User, Wrench
+  User, Wrench, ClipboardList
 } from 'lucide-react';
 
 // Context
@@ -35,6 +35,7 @@ import CustomerSearch from './Pages/staff/CustomerSearch';
 import CustomerReports from './Pages/staff/CustomerReports';
 import StaffCustomerReports from './Pages/staff/StaffCustomerReports';
 import StaffInvoiceEmail from './Pages/staff/StaffInvoiceEmail';
+import StaffApproval from './Pages/staff/StaffApproval';
 
 // Customer Pages
 import CustomerServices from './Pages/customer/CustomerServices';
@@ -54,7 +55,8 @@ function App() {
     { to: '/staff/register-customer', label: 'Register Customer', icon: UserPlus },
     { to: '/staff/search', label: 'Customer Search & Details', icon: Search },
     { to: '/staff/sales-invoice', label: 'Sales Invoice', icon: FileText },
-    { to: '/staff/invoice-email', label: 'Send Invoice Email', icon: Mail }
+    { to: '/staff/invoice-email', label: 'Send Invoice Email', icon: Mail },
+    { to: '/staff/approvals', label: 'Approvals', icon: ClipboardList },
   ];
 
   const customerLinks = [
@@ -98,6 +100,7 @@ function App() {
             <Route path="reports" element={<CustomerReports />} />
             <Route path="customer-reports" element={<StaffCustomerReports />} />
             <Route path="invoice-email" element={<StaffInvoiceEmail />} />
+            <Route path="approvals"     element={<StaffApproval />} />
           </Route>
 
           {/* Customer Routes */}
