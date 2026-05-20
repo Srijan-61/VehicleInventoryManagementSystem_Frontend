@@ -3,8 +3,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { 
   FileText, Users, Settings, ShoppingCart, Truck, 
-  UserPlus, Monitor, Search, PieChart, Mail, 
-  User, Wrench, AlertTriangle
+  UserPlus, Search, PieChart, Mail, Wrench, AlertTriangle, ClipboardList
 } from 'lucide-react';
 
 // Context
@@ -26,6 +25,7 @@ import ManageStaff from './pages/admin/ManageStaff';
 import ManageParts from './pages/admin/ManageParts';
 import AdminPartsManagement from './Pages/admin/AdminPartsManagement';
 import PurchaseInvoices from './pages/admin/PurchaseInvoices';
+
 import ManageVendors from './pages/admin/ManageVendors';
 import StockAlerts from './pages/admin/StockAlerts';
 
@@ -36,9 +36,11 @@ import CustomerSearch from './Pages/staff/CustomerSearch';
 import CustomerReports from './Pages/staff/CustomerReports';
 import StaffCustomerReports from './Pages/staff/StaffCustomerReports';
 import StaffInvoiceEmail from './Pages/staff/StaffInvoiceEmail';
+import StaffApproval from './Pages/staff/StaffApproval';
 
 // Customer Pages
 import CustomerServices from './Pages/customer/CustomerServices';
+import CustomerHistory from './Pages/customer/CustomerHistory';
 
 function App() {
   const adminLinks = [
@@ -55,13 +57,15 @@ function App() {
     { to: '/staff/register-customer', label: 'Register Customer', icon: UserPlus },
     { to: '/staff/search', label: 'Customer Search & Details', icon: Search },
     { to: '/staff/sales-invoice', label: 'Sales Invoice', icon: FileText },
-    { to: '/staff/invoice-email', label: 'Send Invoice Email', icon: Mail }
+    { to: '/staff/invoice-email', label: 'Send Invoice Email', icon: Mail },
+    { to: '/staff/approvals', label: 'Approvals', icon: ClipboardList },
   ];
 
   const customerLinks = [
     { to: '/customer/book-appointment', label: 'Book Appointment', icon: Wrench },
     { to: '/customer/request-part',     label: 'Request Part',     icon: ShoppingCart },
     { to: '/customer/leave-review',     label: 'Leave Review',     icon: Search },
+    { to: '/customer/history',          label: 'Service History',  icon: FileText },
   ];
 
   return (
@@ -99,6 +103,7 @@ function App() {
             <Route path="reports" element={<CustomerReports />} />
             <Route path="customer-reports" element={<StaffCustomerReports />} />
             <Route path="invoice-email" element={<StaffInvoiceEmail />} />
+            <Route path="approvals"     element={<StaffApproval />} />
           </Route>
 
           {/* Customer Routes */}
@@ -107,6 +112,7 @@ function App() {
             <Route path="book-appointment" element={<CustomerServices defaultTab="appointment" />} />
             <Route path="request-part" element={<CustomerServices defaultTab="partRequest" />} />
             <Route path="leave-review" element={<CustomerServices defaultTab="review" />} />
+            <Route path="history" element={<CustomerHistory />} />
           </Route>
 
         </Routes>

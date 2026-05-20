@@ -22,6 +22,11 @@ export const customerApi = {
   getPartRequests: () => apiClient.get('/customer/part-requests'),
   createPartRequest: (data) => apiClient.post('/customer/part-requests', data),
 
+  // Delete a part request by ID. Only allowed while the request is still Pending.
+  deletePartRequest:  (id) => apiClient.delete(`/customer/part-requests/${id}`),
+  // Fallback cancel (PUT) in case the backend doesn't expose DELETE.
+  cancelPartRequest:  (id) => apiClient.put(`/customer/part-requests/${id}/cancel`),
+
   // ── Reviews ───────────────────────────────────────────────────────────────
   getCompletedAppointments: () => apiClient.get('/customer/appointments/completed'),
   getReviews: () => apiClient.get('/customer/reviews'),

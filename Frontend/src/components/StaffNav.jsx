@@ -24,6 +24,7 @@ const StaffNav = () => {
     { name: 'Customer Search', path: '/staff/search' },
     { name: 'Sales Invoice', path: '/staff/sales-invoice' },
     { name: 'Send Invoice Email', path: '/staff/invoice-email' },
+    { name: 'Approvals', path: '/staff/approvals' },
   ];
 
   return (
