@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { 
   FileText, Users, Settings, ShoppingCart, Truck, 
   UserPlus, Monitor, Search, PieChart, Mail, 
-  User, Wrench, ClipboardList
+  User, Wrench, ClipboardList, History
 } from 'lucide-react';
 
 import { AuthProvider } from "./context/AuthContext";
@@ -37,6 +37,7 @@ import StaffInvoiceEmail from './Pages/staff/StaffInvoiceEmail';
 import StaffApproval from './Pages/staff/StaffApproval';
 
 import CustomerServices from "./Pages/customer/CustomerServices";
+import CustomerHistory from "./Pages/customer/CustomerHistory";
 
 function App() {
   const adminLinks = [
@@ -59,6 +60,7 @@ function App() {
     { to: "/customer/book-appointment", label: "Book Appointment", icon: Wrench },
     { to: "/customer/request-part", label: "Request Part", icon: ShoppingCart },
     { to: "/customer/leave-review", label: "Leave Review", icon: Search },
+    { to: "/customer/history", label: "Service History", icon: History },
   ];
 
   return (
@@ -147,6 +149,10 @@ function App() {
             <Route
               path="leave-review"
               element={<CustomerServices defaultTab="review" />}
+            />
+            <Route
+              path="history"
+              element={<CustomerHistory />}
             />
           </Route>
         </Routes>

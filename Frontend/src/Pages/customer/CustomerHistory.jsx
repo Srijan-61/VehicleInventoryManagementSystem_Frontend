@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { History, RefreshCw, ShoppingBag, Wrench } from "lucide-react";
+import { customerApi } from "../../api/customerApi";
 
 const CustomerHistory = () => {
   const [history, setHistory] = useState([]);
@@ -10,25 +10,13 @@ const CustomerHistory = () => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setError("No authentication token found. Please log in.");
-          setLoading(false);
-          return;
-        }
-
-        const response = await axios.get("https://localhost:7111/api/customer/history", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        setHistory(response.data.historyItems || []);
+        const response = await customerApi.getHistory();
+        setHistory(response.data?.historyItems || response.historyItems || []);
         setError("");
       } catch (err) {
         console.error("Failed to fetch history:", err);
         setError(
-          err.response?.data?.message ||
+          err.message ||
             "Failed to load customer history. Please try again later."
         );
       } finally {
