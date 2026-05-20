@@ -7,6 +7,7 @@ import {
 import {
   getAllParts,
   purchaseParts,
+  purchaseNewPart,
   updatePart,
   deletePart,
   getVendors,
@@ -40,6 +41,8 @@ const ModalOverlay = ({ onClose, children, wide = false }) => (
 
 // ─── Stock status logic ────────────────────────────────────────────────────────
 const getStockStatus = (part) => {
+  // Soft-deleted / deactivated parts are shown as Unavailable regardless of quantity
+  if (part.isAvailable === false) return 'unavailable';
   if (part.stock_Quantity === 0) return 'out-of-stock';
   if (part.stock_Quantity <= part.minimum_Stock_Level) return 'low-stock';
   return 'in-stock';
@@ -49,9 +52,10 @@ const getStockStatus = (part) => {
 const StockBadge = ({ part }) => {
   const s = getStockStatus(part);
   const map = {
-    'out-of-stock': ['bg-red-100 text-red-700', 'Out of Stock'],
-    'low-stock':    ['bg-yellow-100 text-yellow-700', 'Low Stock'],
-    'in-stock':     ['bg-green-100 text-green-700', 'In Stock'],
+    'unavailable':  ['bg-gray-100 text-gray-500',      'Unavailable'],
+    'out-of-stock': ['bg-red-100 text-red-700',         'Out of Stock'],
+    'low-stock':    ['bg-yellow-100 text-yellow-700',   'Low Stock'],
+    'in-stock':     ['bg-green-100 text-green-700',     'In Stock'],
   };
   const [cls, label] = map[s];
   return (
@@ -79,23 +83,25 @@ const SummaryCard = ({ icon: Icon, iconBg, label, value, sub }) => (
 const INIT_PURCHASE = {
   vendor_ID:          '',
   payment_Status:     'Paid',
-  // item-level fields
-  part_ID:            '',   // used when purchasing an existing part
-  part_Name:          '',   // used when creating a new part
+  // existing-part fields
+  part_ID:            '',
+  // new-part fields
+  part_Name:          '',
   brand:              '',
   part_Category:      '',
   selling_Price:      '',
+  // shared
   quantity_Purchased: '',
   purchase_Unit_Cost: '',
 };
 
 const INIT_EDIT = {
-  part_Name:          '',
-  brand:              '',
-  part_Category:      '',
-  unit_Price:         '',
-  stock_Quantity:     '',
-  minimum_Stock_Level:'',
+  part_Name:           '',
+  brand:               '',
+  part_Category:       '',
+  unit_Price:          '',   // selling price shown to customers
+  minimum_Stock_Level: '',   // reorder-alert threshold
+  isAvailable:         true, // Active / Inactive toggle
 };
 
 // ─── Client-side validators ──────────────────────────────────────────────────────
@@ -103,10 +109,11 @@ const INIT_EDIT = {
 // or null if every field is valid. Running these before the API call avoids
 // sending bad data across the network.
 
-const validatePurchase = (form, isNewPart) => {
-  if (!form.vendor_ID)             return 'Please select a vendor.';
-  if (!isNewPart && !form.part_ID) return 'Please select a part to restock.';
-  if (isNewPart) {
+const validatePurchase = (form, partMode) => {
+  if (!form.vendor_ID) return 'Please select a vendor.';
+  if (partMode === 'existing') {
+    if (!form.part_ID) return 'Please select a part to restock.';
+  } else {
     if (!form.part_Name.trim())     return 'Part name is required.';
     if (!form.brand.trim())         return 'Brand is required.';
     if (!form.part_Category.trim()) return 'Category is required.';
@@ -121,8 +128,7 @@ const validateEdit = (form) => {
   if (!form.part_Name.trim())     return 'Part name is required.';
   if (!form.brand.trim())         return 'Brand is required.';
   if (!form.part_Category.trim()) return 'Category is required.';
-  if (Number(form.unit_Price) < 0)          return 'Unit price cannot be negative.';
-  if (Number(form.stock_Quantity) < 0)      return 'Stock quantity cannot be negative.';
+  if (Number(form.unit_Price) <= 0)         return 'Selling price must be greater than 0.';
   if (Number(form.minimum_Stock_Level) < 0) return 'Reorder level cannot be negative.';
   return null;
 };
@@ -131,9 +137,10 @@ const validateEdit = (form) => {
 const AdminPartsManagement = () => {
 
   // ── Data ──────────────────────────────────────────────────────────────────────
-  const [parts,   setParts]   = useState([]);   // full list of parts fetched from the backend
-  const [vendors, setVendors] = useState([]);   // vendor list shown in the purchase form dropdown
-  const [loading, setLoading] = useState(true); // true while the initial page load is happening
+  const [parts,       setParts]       = useState([]);    // full list of parts fetched from the backend
+  const [vendors,     setVendors]     = useState([]);    // vendor list shown in the purchase form dropdown
+  const [vendorError, setVendorError] = useState(false); // true when the vendor list could not be loaded
+  const [loading,     setLoading]     = useState(true);  // true while the initial page load is happening
 
   // ── Search & filter ───────────────────────────────────────────────────────────
   const [searchQuery,    setSearchQuery]    = useState('');    // text typed in the search box
@@ -146,9 +153,10 @@ const AdminPartsManagement = () => {
   const [showDelete,   setShowDelete]   = useState(false); // controls whether the delete confirm modal is open
 
   // ── Form data ─────────────────────────────────────────────────────────────────
-  const [purchaseForm,   setPurchaseForm]   = useState(INIT_PURCHASE); // all input values inside the purchase form
-  const [isNewPart,      setIsNewPart]      = useState(false); // true = entering a brand-new part, false = restocking an existing part
-  const [editForm,       setEditForm]       = useState(INIT_EDIT);    // all input values inside the edit form
+  const [purchaseForm,  setPurchaseForm]  = useState(INIT_PURCHASE);
+  // 'existing' = restock a part already in inventory  |  'new' = add a brand-new part
+  const [partMode,      setPartMode]      = useState('existing');
+  const [editForm,      setEditForm]      = useState(INIT_EDIT);
   const [editingPartId,  setEditingPartId]  = useState(null); // ID of the part currently being edited
   const [deletingPart,   setDeletingPart]   = useState(null); // the full part object chosen for deletion (displayed in the confirm modal)
 
@@ -162,29 +170,69 @@ const AdminPartsManagement = () => {
     loadAll();
   }, []);
 
-  // Fetch parts and vendors at the same time to reduce wait time on first load
+  // Fetch parts and vendors at the same time to reduce wait time on first load.
+  // allSettled lets both requests finish independently so a vendor failure does not
+  // also hide the parts table, and vice-versa.
   const loadAll = async () => {
     setLoading(true);
-    try {
-      // Promise.all fires both requests simultaneously instead of one after the other
-      const [partsData, vendorsData] = await Promise.all([
-        getAllParts(),
-        getVendors(),
-      ]);
-      setParts(partsData);
-      setVendors(vendorsData);
-    } catch (err) {
-      toast.error(err.message || 'Failed to load data. Please refresh.');
-    } finally {
-      setLoading(false);
+    setVendorError(false);
+    const [partsResult, vendorsResult] = await Promise.allSettled([
+      getAllParts(),
+      getVendors(),
+    ]);
+
+    // ── Parts ──────────────────────────────────────────────────────────────
+    if (partsResult.status === 'fulfilled') {
+      const d = partsResult.value.data;
+      setParts(Array.isArray(d) ? d : (d?.data ?? []));
+    } else {
+      toast.error(
+        partsResult.reason?.message || 'Failed to load parts. Please refresh.'
+      );
     }
+
+    // ── Vendors ────────────────────────────────────────────────────────────
+    if (vendorsResult.status === 'fulfilled') {
+      const raw = vendorsResult.value.data;
+      // Log the raw response so we can see the exact shape the backend returns
+      console.log('Raw vendors response:', raw);
+
+      // .NET backends can wrap the array in several ways — try each in order:
+      //   1. Direct array              [ { Vendor_ID: 1 }, ... ]
+      //   2. Entity Framework wrap     { $values: [ ... ] }
+      //   3. Generic data wrapper      { data: [ ... ] }
+      //   4. Named property            { vendors: [ ... ] }
+      //   5. Named property            { items: [ ... ] }
+      let list;
+      if (Array.isArray(raw))              list = raw;
+      else if (Array.isArray(raw?.$values))  list = raw.$values;
+      else if (Array.isArray(raw?.data))     list = raw.data;
+      else if (Array.isArray(raw?.vendors))  list = raw.vendors;
+      else if (Array.isArray(raw?.items))    list = raw.items;
+      else                                   list = [];
+
+      // Normalise field names — backend VendorDto returns { Id, Name }.
+      // Also handle older/alternative shapes just in case:
+      //   { id, name }  { Id, Name }  { vendor_ID, vendor_Name }  { Vendor_ID, Vendor_Name }
+      const normalised = list.map(v => ({
+        vendor_ID:   v.Id         ?? v.id         ?? v.vendor_ID   ?? v.Vendor_ID,
+        vendor_Name: v.Name       ?? v.name       ?? v.vendor_Name ?? v.Vendor_Name,
+      }));
+      console.log('Vendors normalised:', normalised);
+      setVendors(normalised);
+    } else {
+      setVendorError(true);
+      toast.error('Unable to load vendors. Please try again.');
+    }
+
+    setLoading(false);
   };
 
   // Refresh only the parts table (called after every mutation)
   const reloadParts = async () => {
     try {
-      const data = await getAllParts();
-      setParts(data);
+      const res = await getAllParts();
+      setParts(Array.isArray(res.data) ? res.data : (res.data?.data ?? []));
     } catch (err) {
       toast.error(err.message || 'Failed to refresh parts list.');
     }
@@ -227,7 +275,8 @@ const AdminPartsManagement = () => {
         stockFilter === 'all' ||
         (stockFilter === 'in-stock'     && status === 'in-stock') ||
         (stockFilter === 'low-stock'    && status === 'low-stock') ||
-        (stockFilter === 'out-of-stock' && status === 'out-of-stock');
+        (stockFilter === 'out-of-stock' && status === 'out-of-stock') ||
+        (stockFilter === 'unavailable'  && status === 'unavailable');
       // The part appears in the table only if it passes all three checks
       return matchesSearch && matchesCategory && matchesStock;
     });
@@ -236,8 +285,8 @@ const AdminPartsManagement = () => {
   // ── Purchase modal handlers ───────────────────────────────────────────────────
   // Reset the purchase form to blank values and open the modal in "Existing Part" mode by default
   const openPurchaseModal = () => {
-    setPurchaseForm(INIT_PURCHASE); // clear any data left over from the last time the modal was open
-    setIsNewPart(false);            // default to restocking an existing part
+    setPurchaseForm(INIT_PURCHASE);
+    setPartMode('existing'); // always start on Existing Part tab
     setShowPurchase(true);
   };
 
@@ -254,41 +303,50 @@ const AdminPartsManagement = () => {
     e.preventDefault();
 
     // Validate locally before locking the button or making a network request
-    const validationError = validatePurchase(purchaseForm, isNewPart);
+    const validationError = validatePurchase(purchaseForm, partMode);
     if (validationError) { toast.error(validationError); return; }
+
+    // Warn (non-blocking) when selling price is lower than purchase cost
+    if (
+      partMode === 'new' &&
+      Number(purchaseForm.selling_Price) < Number(purchaseForm.purchase_Unit_Cost)
+    ) {
+      toast.warn('Selling price is lower than purchase cost. Consider revising.');
+    }
 
     setPurchasing(true);
     try {
-      // ── Payload ────────────────────────────────────────────────────────────
-      // Admin_ID is intentionally NOT sent — the backend extracts it from the
-      // JWT token automatically. purchase_Date and notes are also not required.
-      //
-      // Backend behaviour:
-      //   - part_ID = null   → creates a new part record, then adds stock
-      //   - part_ID = number → finds existing part and increases stock_Quantity
-      const payload = {
-        vendor_ID:      Number(purchaseForm.vendor_ID),
-        payment_Status: purchaseForm.payment_Status,
-        items: [
-          isNewPart
-            ? {
-                part_ID:            null,
-                part_Name:          purchaseForm.part_Name,
-                brand:              purchaseForm.brand,
-                part_Category:      purchaseForm.part_Category,
-                selling_Price:      Number(purchaseForm.selling_Price),
-                quantity_Purchased: Number(purchaseForm.quantity_Purchased),
-                purchase_Unit_Cost: Number(purchaseForm.purchase_Unit_Cost),
-              }
-            : {
-                part_ID:            Number(purchaseForm.part_ID),
-                quantity_Purchased: Number(purchaseForm.quantity_Purchased),
-                purchase_Unit_Cost: Number(purchaseForm.purchase_Unit_Cost),
-              },
-        ],
-      };
+      let purchaseRes;
+      if (partMode === 'existing') {
+        // Restock an existing part
+        const payload = {
+          vendor_ID:      Number(purchaseForm.vendor_ID),
+          payment_Status: purchaseForm.payment_Status,
+          items: [{
+            part_ID:            Number(purchaseForm.part_ID),
+            quantity_Purchased: Number(purchaseForm.quantity_Purchased),
+            purchase_Unit_Cost: Number(purchaseForm.purchase_Unit_Cost),
+          }],
+        };
+        console.log('Purchase payload (existing):', payload);
+        purchaseRes = await purchaseParts(payload);
+      } else {
+        // Create a brand-new inventory part and record first purchase
+        const payload = {
+          vendor_ID:          Number(purchaseForm.vendor_ID),
+          payment_Status:     purchaseForm.payment_Status,
+          part_Name:          purchaseForm.part_Name.trim(),
+          brand:              purchaseForm.brand.trim(),
+          part_Category:      purchaseForm.part_Category.trim(),
+          selling_Price:      Number(purchaseForm.selling_Price),
+          quantity_Purchased: Number(purchaseForm.quantity_Purchased),
+          purchase_Unit_Cost: Number(purchaseForm.purchase_Unit_Cost),
+        };
+        console.log('Purchase payload (new part):', payload);
+        purchaseRes = await purchaseNewPart(payload);
+      }
 
-      const result = await purchaseParts(payload);
+      const result = purchaseRes.data;
 
       // The backend returns { success: true/false, message: "..." }.
       // When success is false the HTTP status may still be 200, so we check
@@ -314,14 +372,14 @@ const AdminPartsManagement = () => {
   // Pre-fill the edit form with the selected part's current values and open the modal.
   // Using ?? '' ensures no field is ever undefined (undefined would break controlled inputs).
   const openEditModal = (part) => {
-    setEditingPartId(part.part_ID); // remember which part we are saving changes to
+    setEditingPartId(part.part_ID);
     setEditForm({
-      part_Name:           part.part_Name          ?? '',
-      brand:               part.brand               ?? '',
-      part_Category:       part.part_Category       ?? '',
-      unit_Price:          part.unit_Price           ?? '',
-      stock_Quantity:      part.stock_Quantity       ?? '',
-      minimum_Stock_Level: part.minimum_Stock_Level  ?? '',
+      part_Name:           part.part_Name           ?? '',
+      brand:               part.brand                ?? '',
+      part_Category:       part.part_Category        ?? '',
+      unit_Price:          part.unit_Price            ?? '',
+      minimum_Stock_Level: part.minimum_Stock_Level   ?? '',
+      isAvailable:         part.isAvailable           ?? true,
     });
     setShowEdit(true);
   };
@@ -342,14 +400,13 @@ const AdminPartsManagement = () => {
 
     setEditing(true);
     try {
-      // Adjust payload fields to match your backend PUT /api/admin/parts/{partId} contract
       const payload = {
-        part_Name:           editForm.part_Name,
-        brand:               editForm.brand,
-        part_Category:       editForm.part_Category,
+        part_Name:           editForm.part_Name.trim(),
+        brand:               editForm.brand.trim(),
+        part_Category:       editForm.part_Category.trim(),
         unit_Price:          Number(editForm.unit_Price),
-        stock_Quantity:      Number(editForm.stock_Quantity),
         minimum_Stock_Level: Number(editForm.minimum_Stock_Level),
+        isAvailable:         editForm.isAvailable,
       };
       await updatePart(editingPartId, payload);
       toast.success('Part updated successfully!');
@@ -376,7 +433,7 @@ const AdminPartsManagement = () => {
     setDeleting(true);
     try {
       await deletePart(deletingPart.part_ID);
-      toast.success(`"${deletingPart.part_Name}" deleted successfully.`);
+      toast.success(`"${deletingPart.part_Name}" has been deactivated and hidden from dropdowns.`);
       setShowDelete(false);
       setDeletingPart(null);
       reloadParts();
@@ -500,6 +557,7 @@ const AdminPartsManagement = () => {
             <option value="in-stock">In Stock</option>
             <option value="low-stock">Low Stock</option>
             <option value="out-of-stock">Out of Stock</option>
+            <option value="unavailable">Unavailable</option>
           </select>
         </div>
       </div>
@@ -619,12 +677,23 @@ const AdminPartsManagement = () => {
                     onChange={handlePurchaseChange}
                     required
                     className={inputCls}
+                    disabled={vendorError}
                   >
                     <option value="">— Select vendor —</option>
                     {vendors.map(v => (
-                      <option key={v.vendor_ID} value={v.vendor_ID}>{v.vendor_Name}</option>
+                      <option
+                        key={v.vendor_ID ?? v.Vendor_ID}
+                        value={v.vendor_ID ?? v.Vendor_ID}
+                      >
+                        {v.vendor_Name ?? v.Vendor_Name}
+                      </option>
                     ))}
                   </select>
+                  {vendorError && (
+                    <p className="mt-1 text-xs text-red-500">
+                      Unable to load vendors. Please try again.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className={labelCls}>Payment Status</label>
@@ -640,42 +709,54 @@ const AdminPartsManagement = () => {
                 </div>
               </div>
 
-              {/* Toggle: existing part vs new part */}
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <span className="text-sm font-medium text-gray-700">Part type:</span>
-                <button
-                  type="button"
-                  onClick={() => setIsNewPart(false)}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
-                    !isNewPart
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  Existing Part
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsNewPart(true)}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
-                    isNewPart
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  New Part
-                </button>
+              {/* ── Part type toggle ─────────────────────────────────── */}
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-2">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Part Type</p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPartMode('existing');
+                      setPurchaseForm(f => ({ ...f, part_Name: '', brand: '', part_Category: '', selling_Price: '' }));
+                    }}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${
+                      partMode === 'existing'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                        : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100'
+                    }`}
+                  >
+                    Existing Part
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPartMode('new');
+                      setPurchaseForm(f => ({ ...f, part_ID: '' }));
+                    }}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${
+                      partMode === 'new'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                        : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100'
+                    }`}
+                  >
+                    New Part
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400">
+                  {partMode === 'existing'
+                    ? 'Use this when restocking an item that already exists in inventory.'
+                    : 'Use this when adding a completely new inventory item for the first time.'}
+                </p>
               </div>
 
-              {/* Existing part — select from dropdown */}
-              {!isNewPart && (
+              {/* ── EXISTING PART: dropdown ──────────────────────────────── */}
+              {partMode === 'existing' && (
                 <div>
                   <label className={labelCls}>Select Part <span className="text-red-500">*</span></label>
                   <select
                     name="part_ID"
                     value={purchaseForm.part_ID}
                     onChange={handlePurchaseChange}
-                    required
                     className={inputCls}
                   >
                     <option value="">— Select a part —</option>
@@ -688,8 +769,8 @@ const AdminPartsManagement = () => {
                 </div>
               )}
 
-              {/* New part — extra detail fields */}
-              {isNewPart && (
+              {/* ── NEW PART: detail fields ──────────────────────────────── */}
+              {partMode === 'new' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelCls}>Part Name <span className="text-red-500">*</span></label>
@@ -698,7 +779,6 @@ const AdminPartsManagement = () => {
                       name="part_Name"
                       value={purchaseForm.part_Name}
                       onChange={handlePurchaseChange}
-                      required
                       placeholder="e.g. Brake Pad"
                       className={inputCls}
                     />
@@ -710,7 +790,6 @@ const AdminPartsManagement = () => {
                       name="brand"
                       value={purchaseForm.brand}
                       onChange={handlePurchaseChange}
-                      required
                       placeholder="e.g. Bosch"
                       className={inputCls}
                     />
@@ -722,7 +801,6 @@ const AdminPartsManagement = () => {
                       name="part_Category"
                       value={purchaseForm.part_Category}
                       onChange={handlePurchaseChange}
-                      required
                       placeholder="e.g. Brakes"
                       className={inputCls}
                     />
@@ -731,19 +809,25 @@ const AdminPartsManagement = () => {
                     <label className={labelCls}>Selling Price (Rs.) <span className="text-red-500">*</span></label>
                     <input
                       type="number"
-                      min="0"
+                      min="0.01"
+                      step="0.01"
                       name="selling_Price"
                       value={purchaseForm.selling_Price}
                       onChange={handlePurchaseChange}
-                      required
-                      placeholder="0"
+                      placeholder="0.00"
                       className={inputCls}
                     />
+                    {purchaseForm.selling_Price && purchaseForm.purchase_Unit_Cost &&
+                      Number(purchaseForm.selling_Price) <= Number(purchaseForm.purchase_Unit_Cost) && (
+                      <p className="mt-1 text-xs text-yellow-600 font-medium">
+                        Warning: Selling price is not higher than purchase cost.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* Quantity + unit cost — always visible */}
+              {/* ── Quantity + unit cost (always shown) ─────────────────── */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Quantity Purchased <span className="text-red-500">*</span></label>
@@ -753,7 +837,6 @@ const AdminPartsManagement = () => {
                     name="quantity_Purchased"
                     value={purchaseForm.quantity_Purchased}
                     onChange={handlePurchaseChange}
-                    required
                     placeholder="0"
                     className={inputCls}
                   />
@@ -762,16 +845,27 @@ const AdminPartsManagement = () => {
                   <label className={labelCls}>Purchase Unit Cost (Rs.) <span className="text-red-500">*</span></label>
                   <input
                     type="number"
-                    min="0"
+                    min="0.01"
+                    step="0.01"
                     name="purchase_Unit_Cost"
                     value={purchaseForm.purchase_Unit_Cost}
                     onChange={handlePurchaseChange}
-                    required
-                    placeholder="0"
+                    placeholder="0.00"
                     className={inputCls}
                   />
                 </div>
               </div>
+
+              {/* ── Auto-calculated total ────────────────────────────────── */}
+              {purchaseForm.quantity_Purchased && purchaseForm.purchase_Unit_Cost && (
+                <div className="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-100 px-4 py-3">
+                  <span className="text-sm font-semibold text-blue-700">Total Purchase Amount</span>
+                  <span className="text-base font-bold text-blue-800">
+                    Rs.&nbsp;
+                    {(Number(purchaseForm.quantity_Purchased) * Number(purchaseForm.purchase_Unit_Cost)).toLocaleString('en-IN')}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Footer buttons */}
@@ -785,7 +879,19 @@ const AdminPartsManagement = () => {
               </button>
               <button
                 type="submit"
-                disabled={purchasing}
+                disabled={
+                  purchasing ||
+                  !purchaseForm.vendor_ID ||
+                  !purchaseForm.quantity_Purchased ||
+                  !purchaseForm.purchase_Unit_Cost ||
+                  (partMode === 'existing' && !purchaseForm.part_ID) ||
+                  (partMode === 'new' && (
+                    !purchaseForm.part_Name ||
+                    !purchaseForm.brand ||
+                    !purchaseForm.part_Category ||
+                    !purchaseForm.selling_Price
+                  ))
+                }
                 className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white
                            bg-blue-600 rounded-lg hover:bg-blue-700
                            disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -836,20 +942,37 @@ const AdminPartsManagement = () => {
                     onChange={handleEditChange} required className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>Unit Price (Rs.) <span className="text-red-500">*</span></label>
-                  <input type="number" min="0" name="unit_Price" value={editForm.unit_Price}
-                    onChange={handleEditChange} required className={inputCls} />
-                </div>
-                <div>
-                  <label className={labelCls}>Stock Quantity <span className="text-red-500">*</span></label>
-                  <input type="number" min="0" name="stock_Quantity" value={editForm.stock_Quantity}
-                    onChange={handleEditChange} required className={inputCls} />
+                  <label className={labelCls}>Selling Price (Rs.) <span className="text-red-500">*</span></label>
+                  <input type="number" min="0.01" step="0.01" name="unit_Price" value={editForm.unit_Price}
+                    onChange={handleEditChange} required placeholder="0.00" className={inputCls} />
                 </div>
                 <div>
                   <label className={labelCls}>Reorder Level <span className="text-red-500">*</span></label>
                   <input type="number" min="0" name="minimum_Stock_Level" value={editForm.minimum_Stock_Level}
-                    onChange={handleEditChange} required className={inputCls} />
+                    onChange={handleEditChange} required placeholder="0" className={inputCls} />
+                  <p className="mt-1 text-xs text-gray-400">Low-stock alert triggers when stock falls to or below this number.</p>
                 </div>
+                <div>
+                  <label className={labelCls}>Status <span className="text-red-500">*</span></label>
+                  <select
+                    name="isAvailable"
+                    value={String(editForm.isAvailable)}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, isAvailable: e.target.value === 'true' }))}
+                    className={inputCls}
+                  >
+                    <option value="true">Active — visible in sales &amp; purchase</option>
+                    <option value="false">Inactive — hidden from dropdowns</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Read-only stock info strip */}
+              <div className="mt-4 flex items-center gap-2 rounded-lg bg-gray-50 border border-gray-200 px-4 py-3">
+                <Package className="w-4 h-4 text-gray-400 shrink-0" />
+                <p className="text-xs text-gray-500">
+                  Stock quantity is managed through purchases only.
+                  Use <span className="font-medium text-gray-700">Purchase Part</span> to add stock.
+                </p>
               </div>
             </div>
 
@@ -883,7 +1006,7 @@ const AdminPartsManagement = () => {
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
             <div className="flex items-center gap-2">
               <Trash2 className="w-4 h-4 text-red-500" />
-              <h3 className="text-lg font-semibold text-gray-900">Delete Part</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Deactivate Part</h3>
             </div>
             <button
               onClick={() => setShowDelete(false)}
@@ -895,17 +1018,16 @@ const AdminPartsManagement = () => {
 
           <div className="px-6 py-5 space-y-4">
             {/* Warning block */}
-            <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-red-800">
-                  Are you sure you want to delete this part?
+                <p className="text-sm font-semibold text-amber-800">
+                  Mark this part as inactive?
                 </p>
-                <p className="text-sm text-red-700 mt-1">
-                  This will permanently remove{' '}
+                <p className="text-sm text-amber-700 mt-1">
                   <span className="font-bold">{deletingPart.part_Name}</span>
-                  {' '}({deletingPart.brand}) from the inventory.
-                  This action cannot be undone.
+                  {' '}({deletingPart.brand}) will be hidden from all sales and purchase dropdowns.
+                  All existing invoices and history are preserved. You can reactivate it later via Edit.
                 </p>
               </div>
             </div>
@@ -935,7 +1057,7 @@ const AdminPartsManagement = () => {
                          disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Trash2 className="w-4 h-4" />
-              {deleting ? 'Deleting…' : 'Yes, Delete'}
+              {deleting ? 'Deactivating…' : 'Yes, Deactivate'}
             </button>
           </div>
         </ModalOverlay>

@@ -99,8 +99,32 @@ const StaffInvoiceEmail = () => {
       try {
         setFetchingPreview(true);
         const res = await staffApi.getInvoiceDetails(selectedCustomerId, selectedInvoiceNo);
-        console.log('Invoice detail response:', res.data);
-        setInvoicePreview(res.data);
+        const raw = res.data;
+        console.log('Invoice details response:', raw);
+        console.log('Invoice response keys:', Object.keys(raw ?? {}));
+
+        // Resolve the items array — .NET backends commonly return PascalCase or
+        // mixed-case collection names. Try every known variant before defaulting to [].
+        const resolvedItems =
+          raw.items          ||   // camelCase (expected)
+          raw.Items          ||   // PascalCase
+          raw.salesItems     ||
+          raw.SalesItems     ||
+          raw.invoiceItems   ||
+          raw.InvoiceItems   ||
+          raw.saleItems      ||
+          raw.SaleItems      ||
+          raw.lineItems      ||
+          raw.LineItems      ||
+          [];
+
+        if (resolvedItems.length === 0) {
+          console.warn(
+            'No items found under any known key. Check "Invoice response keys" above to find the correct property name.'
+          );
+        }
+
+        setInvoicePreview({ ...raw, items: resolvedItems });
       } catch (err) {
         // Show the actual backend error instead of silently failing
         setErrorMessage(getErrorMessage(err, 'Failed to load invoice details. Please try again.'));
@@ -328,19 +352,27 @@ const StaffInvoiceEmail = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {invoicePreview.items.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 text-gray-800 font-medium">{item.partName}</td>
-                        <td className="px-4 py-3 text-gray-600">{item.brand}</td>
-                        <td className="px-4 py-3 text-center text-gray-700">{item.quantity_Sold}</td>
-                        <td className="px-4 py-3 text-right text-gray-700">
-                          {formatCurrency(item.unit_Price)}
-                        </td>
-                        <td className="px-4 py-3 text-right text-gray-800 font-semibold">
-                          {formatCurrency(item.total_Price)}
+                    {!invoicePreview.items?.length ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-6 text-center text-gray-400 text-sm">
+                          No items found for this invoice.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      invoicePreview.items?.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 text-gray-800 font-medium">{item.partName}</td>
+                          <td className="px-4 py-3 text-gray-600">{item.brand}</td>
+                          <td className="px-4 py-3 text-center text-gray-700">{item.quantity_Sold}</td>
+                          <td className="px-4 py-3 text-right text-gray-700">
+                            {formatCurrency(item.unit_Price)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-gray-800 font-semibold">
+                            {formatCurrency(item.total_Price)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

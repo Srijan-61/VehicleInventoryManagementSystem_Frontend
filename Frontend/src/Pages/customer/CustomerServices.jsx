@@ -90,6 +90,50 @@ const formatDateTime = (d) => {
 // so the browser blocks past dates at the UI level.
 const TODAY = new Date().toISOString().split('T')[0];
 
+// ─── localStorage helpers — persist brand / urgency that the backend doesn’t return ────
+// The GET /customer/part-requests response omits brand and urgency, so we save
+// them locally at submit time and overlay them when rendering the list.
+const PR_EXTRAS_KEY = 'partRequestExtras';
+
+const loadPartExtras = () => {
+  try { return JSON.parse(localStorage.getItem(PR_EXTRAS_KEY) || '{}'); }
+  catch { return {}; }
+};
+
+// Key = "partName|qty|YYYY-MM-DD" — avoids needing the request ID from the POST response.
+// Multiple requests with the same name+qty on the same day overwrite each other,
+// which is acceptable for this use-case (same customer, same part, same day).
+const savePartExtra = (partName, qty, brand, urgency) => {
+  try {
+    const today  = new Date().toISOString().slice(0, 10);
+    const key    = `${partName}|${qty}|${today}`;
+    const extras = loadPartExtras();
+    extras[key]  = { brand: brand || '', urgency: urgency || '' };
+    localStorage.setItem(PR_EXTRAS_KEY, JSON.stringify(extras));
+  } catch {}
+};
+
+// Find the best-matching extra for a row by scanning for keys that start with
+// "partName|qty|". If multiple dates match, the most recent (alphabetically last) wins.
+const matchPartExtra = (extras, partName, qty) => {
+  const prefix = `${partName}|${qty}|`;
+  const match  = Object.keys(extras)
+    .filter((k) => k.startsWith(prefix))
+    .sort()
+    .pop();
+  return match ? extras[match] : {};
+};
+
+// Remove all localStorage entries for a given partName + qty (called after delete).
+const removePartExtras = (partName, qty) => {
+  try {
+    const prefix = `${partName}|${qty}|`;
+    const extras = loadPartExtras();
+    Object.keys(extras).filter((k) => k.startsWith(prefix)).forEach((k) => delete extras[k]);
+    localStorage.setItem(PR_EXTRAS_KEY, JSON.stringify(extras));
+  } catch {}
+};
+
 // Normalise the response data from either a plain array or a { data: [] } wrapper
 const extractRows = (res) =>
   Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
@@ -235,6 +279,7 @@ const CustomerServices = ({ defaultTab = 'appointment' }) => {
   const [partRequests,    setPartRequests]    = useState([]);
   const [partLoading,     setPartLoading]     = useState(false);
   const [submittingPart,  setSubmittingPart]  = useState(false);
+  const [deletingPartId,  setDeletingPartId]  = useState(null);
 
   // ── Review tab state ────────────────────────────────────────────────────────
   const [reviewForm,       setReviewForm]       = useState(INIT_REVIEW);
@@ -291,7 +336,25 @@ const CustomerServices = ({ defaultTab = 'appointment' }) => {
     setPartLoading(true);
     try {
       const res = await customerApi.getPartRequests();
-      setPartRequests(extractRows(res));
+      const rows = extractRows(res).filter(
+        (r) => r.requested_Part_Name && (r.request_ID || r.requestId) && r.requested_Quantity != null,
+      );
+      // Merge brand/urgency from localStorage — backend omits these fields in GET responses
+      const extras = loadPartExtras();
+      setPartRequests(
+        rows
+          .map((r) => {
+            const ext = matchPartExtra(extras, r.requested_Part_Name, String(r.requested_Quantity ?? ''));
+            return {
+              ...r,
+              brand:   r.brand   || r.Brand   || ext.brand   || '',
+              urgency: r.urgency || r.Urgency || ext.urgency || '',
+            };
+          })
+          // Hide old records that have no urgency data anywhere (pre-fix submissions with no
+          // localStorage entry). All new requests will have urgency (form defaults to "Medium").
+          .filter((r) => r.urgency),
+      );
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to load part requests.'));
     } finally {
@@ -304,14 +367,31 @@ const CustomerServices = ({ defaultTab = 'appointment' }) => {
   const loadReviewTab = async () => {
     setReviewLoading(true);
     try {
-      const [cRes, rRes] = await Promise.all([
-        customerApi.getCompletedAppointments(),
+      // Run both requests in parallel; treat failures as empty arrays.
+      // Use getAppointments() and filter client-side so both 'Approved' and
+      // 'Completed' appointments appear in the review dropdown — not just 'Completed'.
+      const [cRes, rRes] = await Promise.allSettled([
+        customerApi.getAppointments(),
         customerApi.getReviews(),
       ]);
-      setCompletedAppts(extractRows(cRes));
-      setReviews(extractRows(rRes));
-    } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to load review data.'));
+
+      if (cRes.status === 'fulfilled') {
+        const allAppts = extractRows(cRes.value);
+        const eligible = allAppts.filter((a) => {
+          const st = (a.appointment_Status || a.status || '').toLowerCase();
+          return st === 'completed' || st === 'approved';
+        });
+        setCompletedAppts(eligible);
+      } else {
+        setCompletedAppts([]);
+      }
+
+      if (rRes.status === 'fulfilled') {
+        setReviews(extractRows(rRes.value));
+      } else {
+        // Reviews fetch failure is unexpected — show an error
+        toast.error(getErrorMessage(rRes.reason, 'Failed to load your reviews.'));
+      }
     } finally {
       setReviewLoading(false);
     }
@@ -371,7 +451,7 @@ const CustomerServices = ({ defaultTab = 'appointment' }) => {
       setAppointments((prev) =>
         prev.map((a) =>
           (a.appointment_ID || a.appointmentId) === apptId
-            ? { ...a, status: 'Cancelled' }
+            ? { ...a, appointment_Status: 'Cancelled', status: 'Cancelled' }
             : a
         )
       );
@@ -383,6 +463,40 @@ const CustomerServices = ({ defaultTab = 'appointment' }) => {
   };
 
   // ── Part request form handlers ──────────────────────────────────────────────
+
+  const handleDeletePart = async (requestId) => {
+    if (!window.confirm('Delete this part request? This cannot be undone.')) return;
+    setDeletingPartId(requestId);
+    const target = partRequests.find((r) => (r.request_ID || r.requestId) === requestId);
+    try {
+      // Try DELETE first; fall back to a /cancel PUT if the backend returns 404/405
+      try {
+        await customerApi.deletePartRequest(requestId);
+      } catch (e) {
+        const status = e?.response?.status;
+        if (status === 404 || status === 405 || status === 400) {
+          await customerApi.cancelPartRequest(requestId);
+        } else {
+          throw e;
+        }
+      }
+      // Clean matching localStorage entries by part name + qty (no request ID needed)
+      if (target) {
+        removePartExtras(
+          target.requested_Part_Name || '',
+          String(target.requested_Quantity ?? ''),
+        );
+      }
+      setPartRequests((prev) =>
+        prev.filter((r) => (r.request_ID || r.requestId) !== requestId)
+      );
+      toast.success('Part request removed.');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to remove part request.'));
+    } finally {
+      setDeletingPartId(null);
+    }
+  };
 
   const handlePartChange = (e) => {
     const { name, value } = e.target;
@@ -400,15 +514,42 @@ const CustomerServices = ({ defaultTab = 'appointment' }) => {
     try {
       // Backend contract: only requested_Part_Name and requested_Quantity are required.
       // Customer_ID is NOT sent — the backend reads it from the JWT token.
+      // Save brand/urgency to localStorage BEFORE the API call using partName|qty|today
+      // as the key — no need for the response ID which the backend may not return.
+      savePartExtra(
+        partForm.part_Name,
+        String(partForm.quantity),
+        partForm.brand   || '',
+        partForm.urgency || 'Medium',
+      );
+
       await customerApi.createPartRequest({
         requested_Part_Name: partForm.part_Name,
         requested_Quantity:  Number(partForm.quantity),
+        brand:               partForm.brand    || null,
+        urgency:             partForm.urgency  || 'Medium',
+        category:            partForm.category || null,
+        reason:              partForm.reason   || null,
       });
+
       toast.success('Part request submitted! Staff will review it shortly.');
       setPartForm(INIT_PART);
       // Reload so the new request appears in the list
-      const res = await customerApi.getPartRequests();
-      setPartRequests(extractRows(res));
+      const res    = await customerApi.getPartRequests();
+      const rows   = extractRows(res);
+      const extras = loadPartExtras();
+      setPartRequests(rows.map((r) => {
+        const ext = matchPartExtra(
+          extras,
+          r.requested_Part_Name || '',
+          String(r.requested_Quantity ?? ''),
+        );
+        return {
+          ...r,
+          brand:   r.brand   || r.Brand   || ext.brand   || '',
+          urgency: r.urgency || r.Urgency || ext.urgency || '',
+        };
+      }));
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to submit part request. Please try again.'));
     } finally {
@@ -629,7 +770,7 @@ const CustomerServices = ({ defaultTab = 'appointment' }) => {
                       ? <EmptyRow cols={5} message="No appointments found. Book your first one!" />
                       : appointments.map((a, i) => {
                           const id     = a.appointment_ID || a.appointmentId;
-                          const status = a.status || a.appointment_Status || 'Pending';
+                          const status = a.appointment_Status || a.status || 'Pending';
                           return (
                             <tr
                               key={id}
@@ -810,19 +951,20 @@ const CustomerServices = ({ defaultTab = 'appointment' }) => {
                             className={`border-b border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}
                           >
                             <td className="px-4 py-3 font-medium text-gray-800">
-                              {r.part_Name || r.partName || '—'}
+                              {r.requested_Part_Name || '—'}
                             </td>
-                            <td className="px-4 py-3 text-gray-600">{r.brand || '—'}</td>
-                            <td className="px-4 py-3 text-gray-600">{r.quantity}</td>
+                            <td className="px-4 py-3 text-gray-600">{r.brand || 'N/A'}</td>
+                            <td className="px-4 py-3 text-gray-600">{r.requested_Quantity ?? '—'}</td>
                             <td className="px-4 py-3">
-                              <UrgencyBadge urgency={r.urgency} />
+                              <UrgencyBadge urgency={r.urgency || 'N/A'} />
                             </td>
                             <td className="px-4 py-3">
                               <StatusBadge status={r.status} />
                             </td>
                             <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
-                              {formatDate(r.requested_Date || r.requestedDate || r.created_At)}
+                              {formatDate(r.request_Date)}
                             </td>
+
                           </tr>
                         ))
                     }
@@ -853,7 +995,7 @@ const CustomerServices = ({ defaultTab = 'appointment' }) => {
                   Already-reviewed appointments are filtered out by reviewableAppts. */}
               <div>
                 <label className={labelCls}>
-                  Completed Appointment <span className="text-red-500">*</span>
+                  Appointment <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="appointment_ID"
