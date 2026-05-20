@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
-const API_URL = "http://localhost:5000/api/Admin/vendors";
+const API_URL = "https://localhost:7111/api/Admin/vendors";
 
 function VendorPage() {
   const [vendors, setVendors] = useState([]);
