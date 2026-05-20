@@ -71,6 +71,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
 
+          {/* Auth Routes */}
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<CustomerRegister />} />
@@ -78,6 +79,7 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
           </Route>
 
+          {/* Admin Routes */}
           <Route
             path="/admin"
             element={<DashboardLayout title="Admin Portal" links={adminLinks} />}
@@ -91,28 +93,64 @@ function App() {
             <Route path="vendors" element={<VendorPage />} />
           </Route>
 
+          {/* Staff Routes */}
           <Route
             path="/staff"
             element={<DashboardLayout title="Staff Portal" links={staffLinks} />}
           >
-            <Route index element={<Navigate to="/staff/register-customer" replace />} />
+            <Route
+              index
+              element={<Navigate to="/staff/register-customer" replace />}
+            />
             <Route path="register-customer" element={<RegisterCustomer />} />
             <Route path="sales-invoice" element={<SalesInvoice />} />
             <Route path="search" element={<CustomerSearch />} />
-            <Route path="customer-details/:id" element={<CustomerDetails />} />
+            <Route
+              path="customer-details/:id"
+              element={<CustomerDetails />}
+            />
             <Route path="reports" element={<CustomerReports />} />
-            <Route path="customer-reports" element={<StaffCustomerReports />} />
-            <Route path="invoice-email" element={<StaffInvoiceEmail />} />
+            <Route
+              path="customer-reports"
+              element={<StaffCustomerReports />}
+            />
+            <Route
+              path="invoice-email"
+              element={<StaffInvoiceEmail />}
+            />
           </Route>
 
+          {/* Customer Routes */}
           <Route
             path="/customer"
-            element={<DashboardLayout title="Customer Portal" links={customerLinks} />}
+            element={
+              <DashboardLayout
+                title="Customer Portal"
+                links={customerLinks}
+              />
+            }
           >
-            <Route index element={<Navigate to="/customer/book-appointment" replace />} />
-            <Route path="book-appointment" element={<CustomerServices defaultTab="appointment" />} />
-            <Route path="request-part" element={<CustomerServices defaultTab="partRequest" />} />
-            <Route path="leave-review" element={<CustomerServices defaultTab="review" />} />
+            <Route
+              index
+              element={
+                <Navigate
+                  to="/customer/book-appointment"
+                  replace
+                />
+              }
+            />
+            <Route
+              path="book-appointment"
+              element={<CustomerServices defaultTab="appointment" />}
+            />
+            <Route
+              path="request-part"
+              element={<CustomerServices defaultTab="partRequest" />}
+            />
+            <Route
+              path="leave-review"
+              element={<CustomerServices defaultTab="review" />}
+            />
           </Route>
         </Routes>
 
