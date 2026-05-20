@@ -14,11 +14,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-<<<<<<< HEAD
-      const response = await fetch("http://localhost:5000/api/Auth/login", {
-=======
       let response = await fetch("https://localhost:7111/api/CustomerSelfRegister/login", {
->>>>>>> 163436adc05ba68365de63a54ceea7574e21eacf
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
