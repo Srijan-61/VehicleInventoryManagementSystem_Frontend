@@ -14,11 +14,14 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      let response = await fetch("https://localhost:7111/api/CustomerSelfRegister/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      let response = await fetch(
+        "https://localhost:7111/api/CustomerSelfRegister/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        },
+      );
 
       let data = await response.json();
       let isCustomer = false;
@@ -48,8 +51,11 @@ const Login = () => {
           // Admin/Staff - decode role from token
           try {
             const payload = JSON.parse(atob(token.split(".")[1]));
-            const role = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || payload.role;
-            
+            const role =
+              payload[
+                "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+              ] || payload.role;
+
             if (role === "Staff") {
               navigate("/staff");
             } else {
@@ -84,7 +90,10 @@ const Login = () => {
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold text-slate-700"
+              >
                 Email Address
               </label>
               <div className="relative">
@@ -104,7 +113,10 @@ const Login = () => {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-semibold text-slate-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-semibold text-slate-700"
+              >
                 Password
               </label>
               <div className="relative">
@@ -122,7 +134,10 @@ const Login = () => {
                 />
               </div>
               <div className="flex justify-end mt-1">
-                <Link to="/forgot-password" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                >
                   Forgot Password?
                 </Link>
               </div>
@@ -142,7 +157,10 @@ const Login = () => {
           <div className="mt-8 text-center">
             <p className="text-sm font-medium text-slate-500">
               Don't have an account?{" "}
-              <Link to="/register" className="text-blue-600 hover:text-blue-700 font-bold">
+              <Link
+                to="/register"
+                className="text-blue-600 hover:text-blue-700 font-bold"
+              >
                 Sign up
               </Link>
             </p>
@@ -152,7 +170,11 @@ const Login = () => {
 
       <div className="hidden lg:flex lg:w-1/2 relative bg-white items-center justify-center overflow-hidden">
         <div className="relative z-10 w-full h-full flex items-center justify-center p-12">
-          <img src="/src/assets/login vector art.svg" alt="Login Illustration" className="max-w-full max-h-full object-contain" />
+          <img
+            src="/src/assets/login vector art.svg"
+            alt="Login Illustration"
+            className="max-w-full max-h-full object-contain"
+          />
         </div>
       </div>
     </div>
